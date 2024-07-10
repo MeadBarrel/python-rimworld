@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "rimtools"
+version = "0.1.0"
+description = ""
+authors = ["Natalia Borovskikh <lai.tash@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.8.2"
+bs4 = "^0.0.2"
+lxml = "^5.2.2"
+pydantic-settings = "^2.3.4"
+lxml-stubs = "^0.5.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+
+[tool.pyright]
+pythonVersion = "3.12"
+
+[tool.pytest.ini_options]
+testpaths=['tests']
+pythonpath=['.']
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
