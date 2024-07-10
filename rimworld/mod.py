@@ -29,6 +29,7 @@ class ModAbout:
 
     package_id: str  # package ID of the mod
     author: str|None  # author of the mod
+    name: str|None  # name of the mod
     supported_versions: list[str]  # list of supported versions
 
     @classmethod
@@ -41,6 +42,7 @@ class ModAbout:
         xml = load_xml(filepath)
         package_id_element = xml.find('packageId')
         author_element = xml.find('author')
+        name_element = xml.find('name')
 
         assert isinstance(package_id_element, etree._Element) and package_id_element.text
         author = author_element.text if isinstance(author_element, etree._Element) else None
@@ -48,7 +50,14 @@ class ModAbout:
         supported_versions = xml.xpath('/ModMetaData/supportedVersions/li/text()')
         assert isinstance(supported_versions, list)
 
-        return cls(package_id_element.text, author, cast(list[str], supported_versions))
+        name = name_element.text if isinstance(name_element, etree._Element) else None
+
+        return cls(
+                package_id_element.text, 
+                author, 
+                name,
+                cast(list[str], supported_versions),
+                )
 
 
 

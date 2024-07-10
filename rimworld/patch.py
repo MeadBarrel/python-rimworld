@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Collection, Sequence, cast, Self
 from lxml import etree
+from copy import deepcopy
 
 from rimworld.mod import Mod
 
@@ -13,7 +14,13 @@ class PatchError(Exception):
     pass
 
 
+@dataclass(frozen=True)
+class SafeElement:
+    element: etree._Element
 
+    def copy(self) -> etree._Element:
+        return deepcopy(self.element)
+    
 
 @dataclass(frozen=True)
 class PatchOperation:
@@ -58,7 +65,7 @@ class PatchOperationMeta(PatchOperation):
 @dataclass(frozen=True)
 class PatchOperationAdd(PatchOperation):
     xpath: str
-    value: list[etree._Element]
+    value: list[SafeElement]
     append: bool
 
     def __call__(self, xml: etree._Element, _):
@@ -66,11 +73,11 @@ class PatchOperationAdd(PatchOperation):
 
         if self.append:
             for elt in found:
-                elt.extend(self.value)
+                elt.extend([c.copy() for c in self.value])
         else:
             for elt in found:
                 for v in self.value:
-                    elt.insert(0, v)
+                    elt.insert(0, v.copy())
 
         pass
 
@@ -86,7 +93,7 @@ class PatchOperationAdd(PatchOperation):
 @dataclass(frozen=True)
 class PatchOperationInsert(PatchOperation):
     xpath: str
-    value: list[etree._Element]
+    value: list[SafeElement]
     append: bool
 
     def __call__(self, xml: etree._Element, _):
@@ -94,11 +101,11 @@ class PatchOperationInsert(PatchOperation):
         if self.append:
             for f in found:
                 for v in reversed(self.value):
-                    f.addnext(v)
+                    f.addnext(v.copy())
         else:
             for f in found:
                 for v in self.value:
-                    f.addprevious(v)
+                    f.addprevious(v.copy())
 
     @classmethod
     def from_xml(cls, operation_elt: etree._Element) -> Self:
@@ -129,7 +136,7 @@ class PatchOperationRemove(PatchOperation):
 @dataclass(frozen=True)
 class PatchOperationReplace(PatchOperation):
     xpath: str
-    value: list[etree._Element]
+    value: list[SafeElement]
 
     def __call__(self, xml: etree._Element, _):
         found = xpath_elements(xml, self.xpath)
@@ -139,10 +146,11 @@ class PatchOperationReplace(PatchOperation):
             if parent is None:
                 raise PatchError(f'Parent not found for {self.xpath}')
             v1, *v_ = self.value
-            parent.replace(f, v1)
+            v1_ = v1.copy()
+            parent.replace(f, v1_)
 
             for v in reversed(v_):
-                v1.addnext(v)
+                v1_.addnext(v.copy())
 
     @classmethod
     def from_xml(cls, operation_elt: etree._Element) -> Self:
@@ -214,7 +222,7 @@ class PatchOperationAttributeRemove(PatchOperation):
 @dataclass(frozen=True)
 class PatchOperationAddModExtension(PatchOperation):
     xpath: str
-    value: list[etree._Element]
+    value: list[SafeElement]
 
     def __call__(self, xml: etree._Element, _):
         found = xpath_elements(xml, self.xpath)
@@ -225,7 +233,7 @@ class PatchOperationAddModExtension(PatchOperation):
                 mod_extensions = etree.Element('modExtensions')
                 elt.append(mod_extensions)
             for v in self.value:
-                mod_extensions.append(v)
+                mod_extensions.append(v.copy())
 
     @classmethod
     def from_xml(cls, operation_elt: etree._Element) -> Self:
@@ -271,6 +279,61 @@ class PatchOperationSequence(PatchOperation):
         return cls(operations)
 
 
+@dataclass(frozen=True)
+class PatchOperationFindMod(PatchOperation):
+    mods: list[str]
+    match: PatchOperation|None
+    nomatch: PatchOperation|None
+
+    def __call__(self, xml: etree._Element, mods: Collection[Mod]):
+        mod_names = {mod.about.name for mod in mods}
+        matches = all(m in mod_names for m in self.mods)
+        if self.match and matches:
+            return self.match(xml, mods)
+        if self.nomatch and not matches:
+            return self.nomatch(xml, mods)
+
+    @classmethod
+    def from_xml(cls, operation_elt: etree._Element) -> Self:
+        mods_elt = _get_element(operation_elt, 'mods')
+        mods = []
+        for child in mods_elt:
+            if child.tag != 'li':
+                raise MalformedPatchError('<mods> node in PatchOperationFindMod should only contain <li> elements')
+            mods.append(child.text or '')       
+        match_elt = operation_elt.find('match')
+        match = select_operation(match_elt) if match_elt is not None else None
+
+        nomatch_elt = operation_elt.find('nomatch')
+        nomatch = select_operation(nomatch_elt) if nomatch_elt is not None else None
+        return cls(mods, match, nomatch)
+
+
+@dataclass(frozen=True)
+class PatchOperationConditional(PatchOperation):
+    xpath: str
+    match: PatchOperation|None
+    nomatch: PatchOperation|None
+
+    def __call__(self, xml: etree._Element, mods: Collection[Mod]):
+        matches = bool(xpath_elements(xml, self.xpath))
+        if self.match and matches:
+            return self.match(xml, mods)
+        if self.nomatch and not matches:
+            return self.nomatch(xml, mods)
+
+    @classmethod
+    def from_xml(cls, operation_elt: etree._Element) -> Self:
+        xpath = _get_xpath(operation_elt)
+        match_elt = operation_elt.find('match')
+        match = select_operation(match_elt) if match_elt is not None else None
+
+        nomatch_elt = operation_elt.find('nomatch')
+        nomatch = select_operation(nomatch_elt) if nomatch_elt is not None else None
+        return cls(xpath, match, nomatch)
+
+                
+
 def select_operation(element: etree._Element) -> PatchOperation:
     if element.get('MayRequire') or element.get('MayRequireAnyOf'):
         return PatchOperationMeta.from_xml(element)
@@ -300,16 +363,21 @@ def _select_operation(element: etree._Element) -> PatchOperation:
             return PatchOperationSetName.from_xml(element)
         case 'PatchOperationSequence':
             return PatchOperationSequence.from_xml(element)
+        case 'PatchOperationFindMod':
+            return PatchOperationFindMod.from_xml(element)
+        case 'PatchOperationConditional':
+            return PatchOperationConditional.from_xml(element)
         case _:
-            raise MalformedPatchError(f'Unknown operation class: {class_}')
+            raise MalformedPatchError(f'Unknown operation class: {class_} ({element.tag})')
 
 
 def collect_patches(xml: etree._Element, tag: str='Operation') -> list[PatchOperation]:
     result = []
     for operation_elt in xml:
-        tag = operation_elt.tag
-        if tag != tag:
-            raise MalformedPatchError(f'Operations must be tagged as "{tag}"')
+        tag_ = operation_elt.tag
+        if tag_ != tag:
+            continue
+            #raise MalformedPatchError(f'Operations must be tagged as "{tag}"')
         result.append(select_operation(operation_elt))
     return result
 
@@ -351,11 +419,11 @@ def _get_xpath(xml: etree._Element) -> str:
     return xpath
     
     
-def _get_value(xml: etree._Element) -> list[etree._Element]:
+def _get_value(xml: etree._Element) -> list[SafeElement]:
     elt = xml.find('value')
     if elt is None:
         raise MalformedPatchError('Element not found: value')
-    return list(elt)
+    return [SafeElement(e) for e in elt]
 
 
 def _get_text(xml: etree._Element, tag: str) -> str:
@@ -369,6 +437,7 @@ def _get_element(xml: etree._Element, tag: str) -> etree._Element:
     if elt is None:
         raise MalformedPatchError(f'Element not found: {tag}')
     return elt
+
 
 def unused(_):
     pass

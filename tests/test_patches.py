@@ -4,6 +4,29 @@ from rimworld.patch import apply_patches, collect_patches
 from lxml import etree
 
 
+ROYALTY = Mod(
+        about = ModAbout(
+            package_id='Ludeon.Rimworld.Royalty',
+            name='Royalty',
+            author='Ludeon',
+            supported_versions=[],
+            ),
+        path=Path('')
+        )
+
+
+
+RIMQUEST = Mod(
+        about = ModAbout(
+            package_id='rim_quest',
+            name='RimQuest',
+            author='Jecrell',
+            supported_versions=[],
+            ),
+        path=Path('')
+        )
+
+
 def test_patch_operation_add():
     defs_xml = b'''<?xml version="1.0" encoding="utf-8"?>
     <Defs>
@@ -658,16 +681,7 @@ def test_operation_sequence_may_require():
     patches = etree.fromstring(patches_xml)
     expected = etree.fromstring(expected_xml)
 
-    royalty = Mod(
-            about = ModAbout(
-                package_id='Ludeon.Rimworld.Royalty',
-                author='Ludeon',
-                supported_versions=[],
-                ),
-            path=Path('')
-            )
-
-    apply_patches(defs, collect_patches(patches), [royalty])
+    apply_patches(defs, collect_patches(patches), [ROYALTY])
     assert_xml_eq(defs, expected)
 
 
@@ -716,29 +730,257 @@ def test_operation_sequence_may_require_any_of():
     patches = etree.fromstring(patches_xml)
     expected = etree.fromstring(expected_xml)
 
-    royalty = Mod(
-            about = ModAbout(
-                package_id='Ludeon.Rimworld.Royalty',
-                author='Ludeon',
-                supported_versions=[],
-                ),
-            path=Path('')
-            )
-
-    apply_patches(defs, collect_patches(patches), [royalty])
+    apply_patches(defs, collect_patches(patches), [ROYALTY])
     assert_xml_eq(defs, expected)
 
 
-def test_patch_operation_find_mod():
-    assert False
+def test_patch_operation_find_mod_match():
+    defs = etree.fromstring('''
+    <Defs>
+        <IncidentDef>
+            <defName>MFI_DiplomaticMarriage</defName>
+        </IncidentDef>
+        <IncidentDef>
+            <defName>MFI_HuntersLodge</defName>
+        </IncidentDef>
+    </Defs>
+    ''')
+
+    patches = etree.fromstring('''
+    <Patch>
+        <Operation Class="PatchOperationFindMod">
+          <mods>
+            <li>RimQuest</li>
+            <li>Royalty</li>
+          </mods>
+
+          <match Class="PatchOperationAddModExtension">
+            <xpath>Defs/IncidentDef[defName="MFI_DiplomaticMarriage" or defName="MFI_HuntersLodge" or defName="MFI_Quest_PeaceTalks"]</xpath>
+
+            <value>
+              <li Class = "RimQuest.RimQuest_ModExtension">
+                <canBeARimQuest>false</canBeARimQuest>
+              </li>
+            </value>
+
+          </match>
+        </Operation>
+    </Patch>
+    ''')
+
+    expected = etree.fromstring('''
+    <Defs>
+        <IncidentDef>
+            <defName>MFI_DiplomaticMarriage</defName>
+            <modExtensions>
+                <li Class="RimQuest.RimQuest_ModExtension">
+                    <canBeARimQuest>false</canBeARimQuest>
+                </li>
+            </modExtensions>
+        </IncidentDef>
+        <IncidentDef>
+            <defName>MFI_HuntersLodge</defName>
+            <modExtensions>
+                <li Class="RimQuest.RimQuest_ModExtension">
+                    <canBeARimQuest>false</canBeARimQuest>
+                </li>
+            </modExtensions>
+        </IncidentDef>
+    </Defs>
+    ''')
+
+    apply_patches(defs, collect_patches(patches), mods=[RIMQUEST, ROYALTY])
+    assert_xml_eq(defs, expected)
+
+
+def test_patch_operation_find_mod_nomatch_do_nothing():
+    defs_xml = '''
+    <Defs>
+        <IncidentDef>
+            <defName>MFI_DiplomaticMarriage</defName>
+        </IncidentDef>
+        <IncidentDef>
+            <defName>MFI_HuntersLodge</defName>
+        </IncidentDef>
+    </Defs>
+    '''
+    
+    defs = etree.fromstring(defs_xml)
+    expected = etree.fromstring(defs_xml)
+
+    patches = etree.fromstring('''
+    <Patch>
+        <Operation Class="PatchOperationFindMod">
+          <mods>
+            <li>RimQuest</li>
+            <li>Royalty</li>
+          </mods>
+
+          <match Class="PatchOperationAddModExtension">
+            <xpath>Defs/IncidentDef[defName="MFI_DiplomaticMarriage" or defName="MFI_HuntersLodge" or defName="MFI_Quest_PeaceTalks"]</xpath>
+
+            <value>
+
+              <li Class = "RimQuest.RimQuest_ModExtension">
+                <canBeARimQuest>false</canBeARimQuest>
+              </li>
+            </value>
+
+          </match>
+        </Operation>
+    </Patch>
+    ''')
+
+    apply_patches(defs, collect_patches(patches), mods=[RIMQUEST])
+    assert_xml_eq(defs, expected)
+
+
+def test_patch_operation_find_mod_nomatch():
+    defs = etree.fromstring('''
+    <Defs>
+        <IncidentDef>
+            <defName>MFI_DiplomaticMarriage</defName>
+        </IncidentDef>
+        <IncidentDef>
+            <defName>MFI_HuntersLodge</defName>
+        </IncidentDef>
+    </Defs>
+    ''')
+
+    patches = etree.fromstring('''
+    <Patch>
+        <Operation Class="PatchOperationFindMod">
+          <mods>
+            <li>RimQuest</li>
+            <li>Royalty</li>
+          </mods>
+
+          <nomatch Class="PatchOperationAddModExtension">
+            <xpath>Defs/IncidentDef[defName="MFI_DiplomaticMarriage" or defName="MFI_HuntersLodge" or defName="MFI_Quest_PeaceTalks"]</xpath>
+
+            <value>
+
+              <li Class = "RimQuest.RimQuest_ModExtension">
+                <canBeARimQuest>false</canBeARimQuest>
+              </li>
+            </value>
+
+          </nomatch>
+        </Operation>
+    </Patch>
+    ''')
+
+    expected = etree.fromstring('''
+    <Defs>
+        <IncidentDef>
+            <defName>MFI_DiplomaticMarriage</defName>
+            <modExtensions>
+                <li Class="RimQuest.RimQuest_ModExtension">
+                    <canBeARimQuest>false</canBeARimQuest>
+                </li>
+            </modExtensions>
+        </IncidentDef>
+        <IncidentDef>
+            <defName>MFI_HuntersLodge</defName>
+            <modExtensions>
+                <li Class="RimQuest.RimQuest_ModExtension">
+                    <canBeARimQuest>false</canBeARimQuest>
+                </li>
+            </modExtensions>
+        </IncidentDef>
+    </Defs>
+    ''')
+
+    apply_patches(defs, collect_patches(patches), mods=[RIMQUEST])
+    assert_xml_eq(defs, expected)
+
+
+def test_patch_operation_conditional_nomatch():
+    defs = etree.fromstring('''
+    <Defs>
+        <WorldObjectDef>
+            <defName>Caravan</defName>
+        </WorldObjectDef>
+    </Defs>
+    ''')
+
+    patches = etree.fromstring('''
+    <Patch>
+      <!-- add comps field to Caravan WorldObjectDef if it doesn't exist -->
+      <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorldObjectDef[defName="Caravan"]/comps</xpath>
+        <nomatch Class="PatchOperationAdd">
+          <xpath>Defs/WorldObjectDef[defName="Caravan"]</xpath>
+          <value>
+            <comps />
+
+          </value>
+        </nomatch>
+      </Operation>
+    </Patch>
+    ''')
+
+    expected = etree.fromstring('''
+    <Defs>
+        <WorldObjectDef>
+            <defName>Caravan</defName>
+            <comps />
+        </WorldObjectDef>
+    </Defs>
+    ''')
+
+    apply_patches(defs, collect_patches(patches))
+    assert_xml_eq(defs, expected)
+
+def test_patch_operation_conditional_match():
+    defs = etree.fromstring('''
+    <Defs>
+        <WorldObjectDef>
+            <defName>Caravan</defName>
+            <blabla>hello</blabla>
+        </WorldObjectDef>
+    </Defs>
+    ''')
+
+    patches = etree.fromstring('''
+    <Patch>
+      <Operation Class="PatchOperationConditional">
+        <xpath>Defs/WorldObjectDef[defName="Caravan"]/blabla</xpath>
+        <match Class="PatchOperationAdd">
+          <xpath>Defs/WorldObjectDef[defName="Caravan"]</xpath>
+          <value>
+            <comps />
+          </value>
+        </match>
+      </Operation>
+    </Patch>
+    ''')
+
+    expected = etree.fromstring('''
+    <Defs>
+        <WorldObjectDef>
+            <defName>Caravan</defName>
+            <blabla>hello</blabla>
+            <comps />
+        </WorldObjectDef>
+    </Defs>
+    ''')
+
+    apply_patches(defs, collect_patches(patches))
+    assert_xml_eq(defs, expected)
 
 
 def assert_xml_eq(e1, e2, path=''):
+    if not isinstance(e1, etree._Element):
+        raise AssertionError(f'e1 ({e1}) is {type(e1)}, not _Element')
+    if not isinstance(e2, etree._Element):
+        raise AssertionError(f'e2 ({e2}) is {type(e2)}, not _Element')
+
     # Compare tags
+
     if e1.tag != e2.tag:
         raise AssertionError(f"Tags do not match at {path}: {e1.tag} != {e2.tag}")
     
-
     # Compare text
     if (e1.text or '').strip() != (e2.text or '').strip():
         raise AssertionError(f"Text does not match at {path}: '{e1.text}' != '{e2.text}'")
@@ -754,6 +996,9 @@ def assert_xml_eq(e1, e2, path=''):
     
     # Compare children
     if len(e1) != len(e2):
+        print('NOMATCH')
+        print(str(etree.tostring(e1, pretty_print=True)))
+        print(str(etree.tostring(e2, pretty_print=True)))
         raise AssertionError(f"Number of children do not match at {path}: {len(e1)} != {len(e2)}")
     
     # Recursively compare children
