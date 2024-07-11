@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Self, cast
 from lxml import etree
+
+from rimworld.rimworld import Rimworld
 from ._base import *
 
 
@@ -30,10 +32,15 @@ class PatchOperationSequence(PatchOperation):
 
     operations: list[PatchOperation]
 
-    def apply(self, xml: etree._ElementTree, patcher: Patcher) -> PatchOperationSequenceResult:
+    def apply(
+            self, 
+            xml: etree._ElementTree, 
+            patcher: Patcher,
+            rimworld: Rimworld,
+            ) -> PatchOperationSequenceResult:
         results = []
         for operation in self.operations:
-            operation_result = patcher.apply(xml, operation)
+            operation_result = patcher.apply(rimworld, xml, operation)
             results.append(operation_result)
             if not operation_result.is_successful:
                 break

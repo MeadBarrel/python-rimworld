@@ -11,7 +11,11 @@ class PatchOperationSetName(PatchOperation):
     xpath: str
     name: str
 
-    def apply(self, xml: etree._ElementTree, patcher: Patcher) -> PatchOperationBasicCounterResult:
+    def apply(
+            self, 
+            xml: etree._ElementTree, 
+            *_,
+            ) -> PatchOperationBasicCounterResult:
         found = xpath_elements(xml, self.xpath)
 
         for elt in found:

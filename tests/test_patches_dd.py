@@ -5,6 +5,7 @@ import pytest
 
 from rimworld.mod import Mod
 from rimworld.patch import BasePatcher
+from rimworld.rimworld import Rimworld
 from rimworld.xml import load_xml
 
 
@@ -36,11 +37,13 @@ def make_parameters():
                         ]
             else:
                 mods_used = []
+            rimworld = Rimworld(mods=mods_used)
             skip_unknown_operations = case.find('SkipUnknownOperations') is not None
-            patcher = BasePatcher(mods_used, skip_unknown_operations)
+            patcher = BasePatcher(skip_unknown_operations)
             result.append((
                     str(filename),
                     name,
+                    rimworld,
                     patcher,
                     defs,
                     patch,
@@ -51,10 +54,11 @@ def make_parameters():
 parameters = make_parameters()
 
 
-@pytest.mark.parametrize(('file', 'case', 'patcher', 'defs', 'patch', 'expected'), parameters)
+@pytest.mark.parametrize(('file', 'case', 'rimworld', 'patcher', 'defs', 'patch', 'expected'), parameters)
 def test_patches_dd(
         file: str, 
         case: str|None, 
+        rimworld: Rimworld,
         patcher: BasePatcher, 
         defs: etree._Element,
         patch: etree._Element,
@@ -63,7 +67,7 @@ def test_patches_dd(
     _unused(file)
     _unused(case)
     tree = etree.ElementTree(defs)
-    patcher.patch(tree, patch)
+    patcher.patch(rimworld, tree, patch)
     
     expected.tag = 'Defs'
     assert_xml_eq(defs, expected)

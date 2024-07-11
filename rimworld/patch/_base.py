@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from typing import Collection, Self, cast
 
 from rimworld.mod import Mod
+from rimworld import Rimworld
 
 __all__ = [
         'MalformedPatchError',
@@ -64,18 +65,20 @@ class PatchOperationResult(ABC):
 
 
 class Patcher(ABC):
-    def __init__(self, mods: Collection[Mod]|None=None, skip_unknown_operations: bool=False):
-        self._mods = mods or []
-        self._active_package_ids = {mod.package_id for mod in self._mods}
-        self._active_package_names = {mod.about.name for mod in self._mods if mod.about.name}
+    def __init__(self, skip_unknown_operations: bool=False):
         self._skip_unknown_operations = skip_unknown_operations
 
-    def patch(self, xml: etree._ElementTree, patch: etree._Element) -> list[PatchOperationResult]:
+    def patch(self, rimworld: Rimworld, xml: etree._ElementTree, patch: etree._Element) -> list[PatchOperationResult]:
         operations = self.collect_patches(patch)
-        return [self.apply(xml, operation) for operation in operations]
+        return [self.apply(rimworld, xml, operation) for operation in operations]
 
-    def apply(self, xml: etree._ElementTree, operation: 'PatchOperation') -> PatchOperationResult:
-        return operation.apply(xml, self)
+    def apply(
+            self, 
+            rimworld: Rimworld,
+            xml: etree._ElementTree, 
+            operation: 'PatchOperation',
+            ) -> PatchOperationResult:
+        return operation.apply(xml, self, rimworld)
 
     def collect_patches(self, patch: etree._Element, tag: str='Operation') -> list['PatchOperation']:
         result = []
@@ -92,13 +95,6 @@ class Patcher(ABC):
     def skip_unknown_operations(self) -> bool:
         return self._skip_unknown_operations
 
-    @property
-    def active_package_ids(self) -> set[str]:
-        return self._active_package_ids
-
-    @property
-    def active_package_names(self) -> set[str]:
-        return self._active_package_names
 
 @dataclass(frozen=True)
 class PatchOperationMeta:
@@ -140,7 +136,7 @@ class PatchOperation(ABC):
     meta: PatchOperationMeta
     
     @abstractmethod
-    def apply(self, xml: etree._ElementTree, patcher: Patcher) -> PatchOperationResult:
+    def apply(self, xml: etree._ElementTree, patcher: Patcher, rimworld: Rimworld) -> PatchOperationResult:
         ...
 
 

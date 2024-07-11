@@ -1,4 +1,5 @@
-from decimal import Decimal
+from dataclasses import dataclass, field
+from functools import cached_property
 import logging
 from pathlib import Path
 from typing import Collection, NamedTuple, cast
@@ -7,6 +8,22 @@ from lxml import etree
 
 from .mod import GameVersion, Mod
 from .xml import empty_defs, load_xml, find_xmls, merge
+
+
+
+@dataclass
+class Rimworld:
+    mods: list[Mod] = field(default_factory=list)
+    version: GameVersion|None = None
+
+    @cached_property
+    def active_package_ids(self) -> set[str]:
+        return {mod.package_id for mod in self.mods}
+
+    @cached_property
+    def active_package_names(self) -> set[str]:
+        return {mod.about.name for mod in self.mods if mod.about.name}
+
 
 
 class _Modlist(NamedTuple):

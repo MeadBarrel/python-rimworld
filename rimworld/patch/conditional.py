@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Self
 from lxml import etree
+
+from rimworld.rimworld import Rimworld
 from ._base import *
 from ._result import PatchOperationBasicConditionalResult
 
@@ -11,18 +13,23 @@ class PatchOperationConditional(PatchOperation):
     match: PatchOperation|None
     nomatch: PatchOperation|None
 
-    def apply(self, xml: etree._ElementTree, patcher: Patcher) -> PatchOperationBasicConditionalResult:
+    def apply(
+            self, 
+            xml: etree._ElementTree, 
+            patcher: Patcher,
+            rimworld: Rimworld,
+            ) -> PatchOperationBasicConditionalResult:
         matches = bool(xpath_elements(xml, self.xpath))
         if matches:
             return PatchOperationBasicConditionalResult(
                     self,
                     True,
-                    patcher.apply(xml, self.match) if self.match else None
+                    patcher.apply(rimworld, xml, self.match) if self.match else None
                     )
         return PatchOperationBasicConditionalResult(
                 self,
                 False,
-                patcher.apply(xml, self.nomatch) if self.nomatch else None
+                patcher.apply(rimworld, xml, self.nomatch) if self.nomatch else None
                 )
 
     @classmethod

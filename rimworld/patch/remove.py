@@ -10,8 +10,11 @@ from ._result import PatchOperationBasicCounterResult
 class PatchOperationRemove(PatchOperation):
     xpath: str
 
-    def apply(self, xml: etree._ElementTree, patcher: Patcher) -> PatchOperationResult:
-        unused(patcher)
+    def apply(
+            self, 
+            xml: etree._ElementTree, 
+            *_,
+            ) -> PatchOperationResult:
         found = xpath_elements(xml, self.xpath)
         for elt in found:
             parent = elt.getparent()

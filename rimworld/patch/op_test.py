@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Self
 from lxml import etree
+
+from rimworld.rimworld import Rimworld
 from ._base import *
 
 
@@ -23,7 +25,11 @@ class PatchOperationTestResult(PatchOperationResult):
 class PatchOperationTest(PatchOperation):
     xpath: str
 
-    def apply(self, xml: etree._ElementTree, patcher: Patcher) -> PatchOperationTestResult:
+    def apply(
+            self, 
+            xml: etree._ElementTree, 
+            *_,
+            ) -> PatchOperationTestResult:
         found = xpath_elements(xml, self.xpath)
         return PatchOperationTestResult(self, bool(found))
 

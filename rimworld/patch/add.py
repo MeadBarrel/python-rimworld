@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Self
 from lxml import etree
+
 from ._base import *
 from ._result import PatchOperationBasicCounterResult
 
@@ -11,7 +12,11 @@ class PatchOperationAdd(PatchOperation):
     value: list[SafeElement]
     append: bool
 
-    def apply(self, xml: etree._ElementTree, patcher: Patcher) -> PatchOperationBasicCounterResult:
+    def apply(
+            self, 
+            xml: etree._ElementTree, 
+            *_,
+            ) -> PatchOperationBasicCounterResult:
         found = xpath_elements(xml, self.xpath)
 
         if self.append:

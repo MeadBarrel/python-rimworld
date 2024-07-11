@@ -1,6 +1,7 @@
 from typing import Collection
 
 from rimworld.mod import Mod
+from rimworld.rimworld import Rimworld
 from ._base import *
 from lxml import etree
 from ._result import *
@@ -29,22 +30,22 @@ class BasePatcher(Patcher):
     def skip_unknown_operations(self) -> bool:
         return self._skip_unknown_operations
 
-    def apply(self, xml: etree._ElementTree, operation: PatchOperation) -> PatchOperationResult:
-        if operation.meta.may_require and any (p not in self.active_package_ids for p in operation.meta.may_require):
+    def apply(self, rimworld: Rimworld, xml: etree._ElementTree, operation: PatchOperation) -> PatchOperationResult:
+        if operation.meta.may_require and any (p not in rimworld.active_package_ids for p in operation.meta.may_require):
             return PatchOperationDenied(operation)
-        if operation.meta.may_require_any_of and all(p not in self.active_package_ids for p in operation.meta.may_require_any_of):
+        if operation.meta.may_require_any_of and all(p not in rimworld.active_package_ids for p in operation.meta.may_require_any_of):
             return PatchOperationDenied(operation)
         match operation.meta.success:
             case Success.Always:
-                op_result = operation.apply(xml, self)
+                op_result = operation.apply(xml, self, rimworld)
                 if op_result.is_successful():
                     return op_result
                 return PatchOperationSuppressed(op_result)
             case Success.Normal:
-                return operation.apply(xml, self)
+                return operation.apply(xml, self, rimworld)
             case Success.Invert:
                 return PatchOperationInverted(
-                        operation.apply(xml, self)
+                        operation.apply(xml, self, rimworld)
                         )
             case Success.Never:
                 return PatchOperationDenied(operation)
@@ -81,13 +82,5 @@ class BasePatcher(Patcher):
                 if self.skip_unknown_operations:
                     return None
                 raise UnknownPatchOperation(class_)
-
-    @property
-    def active_package_ids(self) -> set[str]:
-        return self._active_package_ids
-
-    @property
-    def active_package_names(self) -> set[str]:
-        return self._active_package_names
 
 
