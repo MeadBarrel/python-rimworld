@@ -29,7 +29,7 @@ def load_xml(filepath: Path) -> etree._Element:
         return etree.fromstring(content, parser=parser)
 
 
-def merge(merge_to: etree._Element, merge_with: etree._Element) -> int:
+def merge(merge_to: etree._ElementTree, merge_with: etree._ElementTree) -> int:
     """
     Merges two XML elements by appending children from one element to the other.
 
@@ -45,19 +45,21 @@ def merge(merge_to: etree._Element, merge_with: etree._Element) -> int:
         int: The number of children added to the target element.
 
     """
-    if merge_to.tag != merge_with.tag:
-        raise DifferentRootsError(f'{merge_to.tag} != {merge_with.tag}')
+    merge_to_root = merge_to.getroot()
+    merge_with_root = merge_with.getroot()
+    if merge_to_root.tag != merge_with_root.tag:
+        raise DifferentRootsError(f'{merge_to_root.tag} != {merge_with_root.tag}')
 
     added = 0
 
-    for node in merge_with.iterchildren():
-        merge_to.append(node)
+    for node in merge_with_root.iterchildren():
+        merge_to_root.append(node)
         added += 1
 
     return added
 
 
-def empty_defs() -> etree._Element:
+def empty_defs() -> etree._ElementTree:
     """
     Creates an empty XML tree with the root tag 'Defs'.
 
@@ -65,7 +67,7 @@ def empty_defs() -> etree._Element:
     Returns:
         etree._Element: Root element of the created XML tree with tag 'Defs'.
     """
-    return empty_tree('Defs')
+    return etree.ElementTree(etree.Element('Defs'))
 
 
 def empty_tree(root_node_tag: str) -> etree._Element:
