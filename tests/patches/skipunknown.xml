@@ -1,0 +1,65 @@
+<Test>
+    <Case>
+        <Name>Sequence</Name>
+
+        <SkipUnknownOperations />
+        <Defs>
+            <ExampleDef> 
+                <defName>Sample</defName>
+                <statBases>
+                    <Flammability>0.5</Flammability>
+                </statBases>
+            </ExampleDef>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationSequence">
+              <operations>
+                <li Class="PatchOperationAdd">
+                  <xpath>Defs/ExampleDef[defName="Sample"]/statBases</xpath>
+                  <value>
+                    <Mass>10</Mass>
+                  </value>
+                </li>
+                <li Class="PatchOperationUnknown"></li>
+                <li Class="PatchOperationSetName">
+                  <xpath>Defs/ExampleDef[defName="Sample"]/statBases/Flammability</xpath>
+                  <name>ToxicEnvironmentResistance</name>
+                </li>
+              </operations>
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ExampleDef> 
+                <defName>Sample</defName>
+                <statBases>
+                    <ToxicEnvironmentResistance>0.5</ToxicEnvironmentResistance>
+                    <Mass>10</Mass>
+                </statBases>
+            </ExampleDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>Conditional</Name>
+        <SkipUnknownOperations />
+        <Defs>
+            <WorldObjectDef>
+                <defName>Caravan</defName>
+                <blabla>hello</blabla>
+            </WorldObjectDef>
+        </Defs>
+        <Patch>
+          <Operation Class="PatchOperationConditional">
+            <xpath>Defs/WorldObjectDef[defName="Caravan"]/blabla</xpath>
+            <match Class="PatchOperationUnknown">
+            </match>
+          </Operation>
+        </Patch>
+        <Expected>
+            <WorldObjectDef>
+                <defName>Caravan</defName>
+                <blabla>hello</blabla>
+            </WorldObjectDef>
+        </Expected>
+        
+    </Case>
+</Test>

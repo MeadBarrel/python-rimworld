@@ -25,11 +25,9 @@ class UnknownPatchOperation(MalformedPatchError):
 
 
 class BasePatcher(Patcher):
-    def __init__(self, mods: Collection[Mod]|None=None) -> None:
-        self._mods = mods or []
-        self._active_package_ids = {mod.package_id for mod in self._mods}
-        self._active_package_names = {mod.about.name for mod in self._mods if mod.about.name}
-        super().__init__()
+    @property
+    def skip_unknown_operations(self) -> bool:
+        return self._skip_unknown_operations
 
     def apply(self, xml: etree._ElementTree, operation: PatchOperation) -> PatchOperationResult:
         if operation.meta.may_require and any (p not in self.active_package_ids for p in operation.meta.may_require):
@@ -51,7 +49,7 @@ class BasePatcher(Patcher):
             case Success.Never:
                 return PatchOperationDenied(operation)
 
-    def select_operation(self, node: etree._Element) -> PatchOperation:
+    def select_operation(self, node: etree._Element) -> 'PatchOperation|None':
         match class_ := node.get('Class'):
             case 'PatchOperationAdd':
                 return PatchOperationAdd.from_xml(node)
@@ -80,6 +78,8 @@ class BasePatcher(Patcher):
             case 'PatchOperationTest':
                 return PatchOperationTest.from_xml(node)
             case _:
+                if self.skip_unknown_operations:
+                    return None
                 raise UnknownPatchOperation(class_)
 
     @property

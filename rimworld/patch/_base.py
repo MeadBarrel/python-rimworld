@@ -3,7 +3,9 @@ from enum import Enum, auto
 from lxml import etree
 from copy import deepcopy
 from abc import ABC, abstractmethod, abstractproperty
-from typing import Self, cast
+from typing import Collection, Self, cast
+
+from rimworld.mod import Mod
 
 __all__ = [
         'MalformedPatchError',
@@ -62,6 +64,12 @@ class PatchOperationResult(ABC):
 
 
 class Patcher(ABC):
+    def __init__(self, mods: Collection[Mod]|None=None, skip_unknown_operations: bool=False):
+        self._mods = mods or []
+        self._active_package_ids = {mod.package_id for mod in self._mods}
+        self._active_package_names = {mod.about.name for mod in self._mods if mod.about.name}
+        self._skip_unknown_operations = skip_unknown_operations
+
     def patch(self, xml: etree._ElementTree, patch: etree._Element) -> list[PatchOperationResult]:
         operations = self.collect_patches(patch)
         return [self.apply(xml, operation) for operation in operations]
@@ -70,23 +78,27 @@ class Patcher(ABC):
         return operation.apply(xml, self)
 
     def collect_patches(self, patch: etree._Element, tag: str='Operation') -> list['PatchOperation']:
-        return [
-                self.select_operation(patch_node)
-                for patch_node in patch
-                if patch_node.tag == tag
-                ]
+        result = []
+        for node in patch:
+            if node.tag == tag and (operation := self.select_operation(node)):
+                result.append(operation)
+        return result
 
     @abstractmethod
-    def select_operation(self, node: etree._Element) -> 'PatchOperation':
+    def select_operation(self, node: etree._Element) -> 'PatchOperation|None':
         ...
 
-    @abstractproperty
+    @property
+    def skip_unknown_operations(self) -> bool:
+        return self._skip_unknown_operations
+
+    @property
     def active_package_ids(self) -> set[str]:
-        ...
+        return self._active_package_ids
 
-    @abstractproperty
+    @property
     def active_package_names(self) -> set[str]:
-        ...
+        return self._active_package_names
 
 @dataclass(frozen=True)
 class PatchOperationMeta:

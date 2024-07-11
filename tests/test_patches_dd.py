@@ -36,10 +36,12 @@ def make_parameters():
                         ]
             else:
                 mods_used = []
+            skip_unknown_operations = case.find('SkipUnknownOperations') is not None
+            patcher = BasePatcher(mods_used, skip_unknown_operations)
             result.append((
                     str(filename),
                     name,
-                    mods_used,
+                    patcher,
                     defs,
                     patch,
                     expected,
@@ -49,18 +51,17 @@ def make_parameters():
 parameters = make_parameters()
 
 
-@pytest.mark.parametrize(('file', 'case', 'mods', 'defs', 'patch', 'expected'), parameters)
+@pytest.mark.parametrize(('file', 'case', 'patcher', 'defs', 'patch', 'expected'), parameters)
 def test_patches_dd(
         file: str, 
         case: str|None, 
-        mods: list[Mod], 
+        patcher: BasePatcher, 
         defs: etree._Element,
         patch: etree._Element,
         expected: etree._Element
         ):
     _unused(file)
     _unused(case)
-    patcher = BasePatcher(mods)
     tree = etree.ElementTree(defs)
     patcher.patch(tree, patch)
     
