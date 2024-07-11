@@ -20,6 +20,9 @@ from .conditional import PatchOperationConditional
 from .op_test import PatchOperationTest
 
 
+class UnknownPatchOperation(MalformedPatchError):
+    pass
+
 
 class BasePatcher(Patcher):
     def __init__(self, mods: Collection[Mod]|None=None) -> None:
@@ -28,7 +31,7 @@ class BasePatcher(Patcher):
         self._active_package_names = {mod.about.name for mod in self._mods if mod.about.name}
         super().__init__()
 
-    def apply(self, xml: etree._Element, operation: PatchOperation) -> PatchOperationResult:
+    def apply(self, xml: etree._ElementTree, operation: PatchOperation) -> PatchOperationResult:
         if operation.meta.may_require and any (p not in self.active_package_ids for p in operation.meta.may_require):
             return PatchOperationDenied(operation)
         if operation.meta.may_require_any_of and all(p not in self.active_package_ids for p in operation.meta.may_require_any_of):
@@ -77,7 +80,7 @@ class BasePatcher(Patcher):
             case 'PatchOperationTest':
                 return PatchOperationTest.from_xml(node)
             case _:
-                raise MalformedPatchError(f'Unknown operation class: {class_} ({node.tag})')
+                raise UnknownPatchOperation(class_)
 
     @property
     def active_package_ids(self) -> set[str]:

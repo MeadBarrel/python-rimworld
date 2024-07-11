@@ -12,7 +12,7 @@ class DifferentRootsError(Exception):
     pass
 
 
-def load_xml(filepath: Path) -> etree._Element:
+def load_xml(filepath: Path) -> etree._ElementTree:
     """
     Loads an XML file and returns its root element.
 
@@ -26,7 +26,7 @@ def load_xml(filepath: Path) -> etree._Element:
     parser = etree.XMLParser(recover=True)
     with filepath.open('rb') as f:
         content = f.read()
-        return etree.fromstring(content, parser=parser)
+        return etree.XML(content, parser=parser)
 
 
 def merge(merge_to: etree._ElementTree, merge_with: etree._ElementTree) -> int:
