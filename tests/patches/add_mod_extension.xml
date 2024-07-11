@@ -1,0 +1,94 @@
+<Test>
+    <Case>
+        <Name>NotExists</Name>
+        <Defs>
+            <ExampleDef Name="SampleBase">
+              <defName>Sample</defName>
+              <foo>Uno</foo>
+
+              <bar>Dos</bar>
+
+              <baz>Tres</baz>
+            </ExampleDef>    
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationAddModExtension">
+
+              <xpath>Defs/ExampleDef[defName="Sample"]</xpath>
+
+              <value>
+                <li Class="MyNamespace.MyModExtension">
+                  <key>Value</key>
+                </li>
+              </value>
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ExampleDef Name="SampleBase">
+              <defName>Sample</defName>
+
+              <foo>Uno</foo>
+
+              <bar>Dos</bar>
+              <baz>Tres</baz>
+              <modExtensions>
+
+                <li Class="MyNamespace.MyModExtension">
+                  <key>Value</key>
+                </li>
+              </modExtensions>
+            </ExampleDef>    
+        </Expected>
+    </Case>
+    <Case>
+        <Name>Exists</Name>
+        <Defs>
+            <ExampleDef Name="SampleBase">
+              <defName>Sample</defName>
+              <foo>Uno</foo>
+
+              <bar>Dos</bar>
+
+              <baz>Tres</baz>
+
+              <modExtensions>
+                <li Class="Some.ModExtension">
+                  <key>Value1</key>
+                </li>
+              </modExtensions>
+            </ExampleDef>    
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationAddModExtension">
+
+              <xpath>Defs/ExampleDef[defName="Sample"]</xpath>
+
+              <value>
+                <li Class="MyNamespace.MyModExtension">
+                  <key>Value</key>
+                </li>
+              </value>
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ExampleDef Name="SampleBase">
+              <defName>Sample</defName>
+
+              <foo>Uno</foo>
+
+              <bar>Dos</bar>
+              <baz>Tres</baz>
+              <modExtensions>
+
+                <li Class="Some.ModExtension">
+                  <key>Value1</key>
+                </li>
+
+                <li Class="MyNamespace.MyModExtension">
+                  <key>Value</key>
+                </li>
+              </modExtensions>
+            </ExampleDef>    
+        </Expected>
+    </Case>
+</Test>

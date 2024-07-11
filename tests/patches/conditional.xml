@@ -1,0 +1,56 @@
+<Test>
+    <Case>
+        <Name>NoMatch</Name>
+        <Defs>
+            <WorldObjectDef>
+                <defName>Caravan</defName>
+            </WorldObjectDef>
+        </Defs>
+        <Patch>
+          <!-- add comps field to Caravan WorldObjectDef if it doesn't exist -->
+          <Operation Class="PatchOperationConditional">
+            <xpath>Defs/WorldObjectDef[defName="Caravan"]/comps</xpath>
+            <nomatch Class="PatchOperationAdd">
+              <xpath>Defs/WorldObjectDef[defName="Caravan"]</xpath>
+              <value>
+                <comps />
+
+              </value>
+            </nomatch>
+          </Operation>
+        </Patch>
+        <Expected>
+            <WorldObjectDef>
+                <defName>Caravan</defName>
+                <comps />
+            </WorldObjectDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>Match</Name>
+        <Defs>
+            <WorldObjectDef>
+                <defName>Caravan</defName>
+                <blabla>hello</blabla>
+            </WorldObjectDef>
+        </Defs>
+        <Patch>
+          <Operation Class="PatchOperationConditional">
+            <xpath>Defs/WorldObjectDef[defName="Caravan"]/blabla</xpath>
+            <match Class="PatchOperationAdd">
+              <xpath>Defs/WorldObjectDef[defName="Caravan"]</xpath>
+              <value>
+                <comps />
+              </value>
+            </match>
+          </Operation>
+        </Patch>
+        <Expected>
+            <WorldObjectDef>
+                <defName>Caravan</defName>
+                <blabla>hello</blabla>
+                <comps />
+            </WorldObjectDef>
+        </Expected>
+    </Case>
+</Test>

@@ -1,0 +1,28 @@
+<Test>
+    <Case>
+        <Defs>
+            <ExampleDef Name="SampleBase">
+              <defName>Sample</defName>
+
+              <foo>Uno</foo>
+
+              <bar>Dos</bar>
+              <baz>Tres</baz>
+            </ExampleDef>    
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationAttributeRemove">
+              <xpath>Defs/ExampleDef[defName="Sample"]</xpath>
+              <attribute>Name</attribute>
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ExampleDef>
+              <defName>Sample</defName>
+              <foo>Uno</foo>
+              <bar>Dos</bar>
+              <baz>Tres</baz>
+            </ExampleDef>    
+        </Expected>
+    </Case>
+</Test>

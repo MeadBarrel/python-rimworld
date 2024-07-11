@@ -1,0 +1,50 @@
+<Test>
+    <Case>
+        <Name>Passes</Name>    
+        <Defs>
+            <Example>
+                <name>example_1</name>
+            </Example>
+            <Example>
+                <name>example_2</name>
+            </Example>
+            <Example>
+                <name>example_3</name>
+            </Example>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationSequence">
+                <operations>
+                    <li Class="PatchOperationAdd">
+                        <xpath>Defs/Example[name="example_3"]</xpath>
+                        <value>
+                            <test>test_3</test>
+                        </value>
+                    </li>
+                    <li Class="PatchOperationTest">
+                        <xpath>Defs/Example[name="example_1"]</xpath>
+                    </li>
+                    <li Class="PatchOperationAdd">
+                        <xpath>Defs/Example[name="example_2"]</xpath>
+                        <value>
+                            <test>test_2</test>
+                        </value>
+                    </li>
+                </operations>
+            </Operation>
+        </Patch>
+        <Expected>
+            <Example>
+                <name>example_1</name>
+            </Example>
+            <Example>
+                <name>example_2</name>
+                <test>test_2</test>
+            </Example>
+            <Example>
+                <name>example_3</name>
+                <test>test_3</test>
+            </Example>
+        </Expected>
+    </Case>
+</Test>

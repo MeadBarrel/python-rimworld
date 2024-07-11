@@ -1,0 +1,69 @@
+<Test>
+    <Case>
+        <Name>Append</Name>
+        <Defs>
+            <ExampleDef>
+              <defName>SampleDef</defName>
+              <aaa>Some text</aaa>
+            </ExampleDef>    
+        </Defs>
+
+        <Patch>
+            <Operation Class="PatchOperationAdd">
+              <xpath>Defs/ExampleDef[defName="SampleDef"]</xpath>
+              <value>
+                <bbb>New text</bbb>
+              </value>
+            </Operation>                               
+        </Patch>
+
+        <Expected>
+            <ExampleDef>
+              <defName>SampleDef</defName>
+              <aaa>Some text</aaa>
+              <bbb>New text</bbb>
+            </ExampleDef>    
+        </Expected>
+
+    </Case>
+
+    <Case>
+        <Name>Prepend</Name>
+        <Defs>
+            <ExampleDef>
+              <defName>Rainbow</defName>
+              <colors>
+                <li>Red</li>
+                <li>Yellow</li>
+                <li>Green</li>
+                <li>Blue</li>
+                <li>Violet</li>
+              </colors>
+            </ExampleDef>    
+        </Defs>
+
+        <Patch>
+            <Operation Class="PatchOperationInsert">
+              <xpath>Defs/ExampleDef[defName="Rainbow"]/colors/li[text()="Yellow"]</xpath>
+              <value>
+                <li>Orange</li>
+              </value>
+            </Operation>    
+        </Patch>
+
+        <Expected>
+            <ExampleDef>
+              <defName>Rainbow</defName>
+              <colors>
+                <li>Red</li>
+                <li>Orange</li>
+                <li>Yellow</li>
+                <li>Green</li>
+                <li>Blue</li>
+                <li>Violet</li>
+              </colors>
+            </ExampleDef>    
+        </Expected>
+
+    </Case>
+</Test>

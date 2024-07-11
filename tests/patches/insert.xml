@@ -1,0 +1,69 @@
+<Test>
+    <Case>
+        <Name>Prepend</Name>
+        <Defs>
+            <ExampleDef>
+              <defName>Fish</defName>
+              <lines>
+                <li>one fish</li>
+                <li>two fish</li>
+              </lines>
+            </ExampleDef>    
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationInsert">
+              <xpath>Defs/ExampleDef[defName="Fish"]/lines/li[text()="two fish"]</xpath>
+              <order>Append</order>
+              <value>
+                <li>red fish</li>
+                <li>blue fish</li>
+              </value>
+
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ExampleDef>
+              <defName>Fish</defName>
+              <lines>
+                <li>one fish</li>
+                <li>two fish</li>
+                <li>red fish</li>
+                <li>blue fish</li>
+              </lines>
+            </ExampleDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>Append</Name>
+        <Defs>
+            <ExampleDef>
+              <defName>Fish</defName>
+              <lines>
+                <li>one fish</li>
+                <li>two fish</li>
+              </lines>
+            </ExampleDef>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationInsert">
+              <xpath>Defs/ExampleDef[defName="Fish"]/lines/li[text()="two fish"]</xpath>
+              <order>Append</order>
+              <value>
+                <li>red fish</li>
+                <li>blue fish</li>
+              </value>
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ExampleDef>
+              <defName>Fish</defName>
+              <lines>
+                <li>one fish</li>
+                <li>two fish</li>
+                <li>red fish</li>
+                <li>blue fish</li>
+              </lines>
+            </ExampleDef>
+        </Expected>
+    </Case>
+</Test>

@@ -1,0 +1,28 @@
+<Test>
+    <Case>
+        <Defs>
+            <ThingDef>
+              <defName>ExampleThing</defName>
+              <!-- many nodes omitted -->
+              <statBases>
+                <Insulation_Cold>10</Insulation_Cold>
+              </statBases>
+            </ThingDef>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationSetName">
+              <xpath>Defs/ThingDef[defName="ExampleThing"]/statBases/Insulation_Cold</xpath>
+              <name>Insulation_Heat</name>
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ThingDef>
+              <defName>ExampleThing</defName>
+              <!-- many nodes omitted -->
+              <statBases>
+                <Insulation_Heat>10</Insulation_Heat>
+              </statBases>
+            </ThingDef>    
+        </Expected>
+    </Case>
+</Test>

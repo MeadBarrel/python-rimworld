@@ -1,0 +1,28 @@
+<Test>
+    <Case>
+        <Defs>
+            <ExampleDef>
+              <defName>Sample</defName>
+              <foo>Uno</foo>
+              <bar>Dos</bar>
+              <baz>Tres</baz>
+            </ExampleDef>    
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationReplace">
+              <xpath>Defs/ExampleDef[defName="Sample"]/baz</xpath>
+              <value>
+                <baz>Drei</baz>
+              </value>
+            </Operation>    
+        </Patch>
+        <Expected>
+            <ExampleDef>
+              <defName>Sample</defName>
+              <foo>Uno</foo>
+              <bar>Dos</bar>
+              <baz>Drei</baz>
+            </ExampleDef>
+        </Expected>
+    </Case>
+</Test>

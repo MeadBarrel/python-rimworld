@@ -1,0 +1,146 @@
+<Test>
+    <Case>
+        <Name>Match</Name>
+        <Mods>
+            <li>ludeon.rimworld.royalty</li>
+            <li>jeckrell.rimquest</li>
+        </Mods>
+        <Defs>
+            <IncidentDef>
+                <defName>MFI_DiplomaticMarriage</defName>
+            </IncidentDef>
+            <IncidentDef>
+                <defName>MFI_HuntersLodge</defName>
+            </IncidentDef>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationFindMod">
+              <mods>
+                <li>RimQuest</li>
+                <li>Royalty</li>
+              </mods>
+
+              <match Class="PatchOperationAddModExtension">
+                <xpath>Defs/IncidentDef[defName="MFI_DiplomaticMarriage" or defName="MFI_HuntersLodge" or defName="MFI_Quest_PeaceTalks"]</xpath>
+
+                <value>
+                  <li Class = "RimQuest.RimQuest_ModExtension">
+                    <canBeARimQuest>false</canBeARimQuest>
+                  </li>
+                </value>
+
+              </match>
+            </Operation>
+        </Patch>
+        <Expected>
+            <IncidentDef>
+                <defName>MFI_DiplomaticMarriage</defName>
+                <modExtensions>
+                    <li Class="RimQuest.RimQuest_ModExtension">
+                        <canBeARimQuest>false</canBeARimQuest>
+                    </li>
+                </modExtensions>
+            </IncidentDef>
+            <IncidentDef>
+                <defName>MFI_HuntersLodge</defName>
+                <modExtensions>
+                    <li Class="RimQuest.RimQuest_ModExtension">
+                        <canBeARimQuest>false</canBeARimQuest>
+                    </li>
+                </modExtensions>
+            </IncidentDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>NoMatchDoNothing</Name>
+        <Mods>
+            <li>RimQuest</li>
+        </Mods>
+        <Defs>
+            <IncidentDef>
+                <defName>MFI_DiplomaticMarriage</defName>
+            </IncidentDef>
+            <IncidentDef>
+                <defName>MFI_HuntersLodge</defName>
+            </IncidentDef>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationFindMod">
+              <mods>
+                <li>RimQuest</li>
+                <li>Royalty</li>
+              </mods>
+
+              <match Class="PatchOperationAddModExtension">
+                <xpath>Defs/IncidentDef[defName="MFI_DiplomaticMarriage" or defName="MFI_HuntersLodge" or defName="MFI_Quest_PeaceTalks"]</xpath>
+
+                <value>
+
+                  <li Class = "RimQuest.RimQuest_ModExtension">
+                    <canBeARimQuest>false</canBeARimQuest>
+                  </li>
+                </value>
+
+              </match>
+            </Operation>
+        </Patch>
+        <Expected>
+            <IncidentDef>
+                <defName>MFI_DiplomaticMarriage</defName>
+            </IncidentDef>
+            <IncidentDef>
+                <defName>MFI_HuntersLodge</defName>
+            </IncidentDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>Nomatch</Name>
+        <Mods><li>RimQuest</li></Mods>
+        <Defs>
+            <IncidentDef>
+                <defName>MFI_DiplomaticMarriage</defName>
+            </IncidentDef>
+            <IncidentDef>
+                <defName>MFI_HuntersLodge</defName>
+            </IncidentDef>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationFindMod">
+              <mods>
+                <li>RimQuest</li>
+                <li>Royalty</li>
+              </mods>
+
+              <nomatch Class="PatchOperationAddModExtension">
+                <xpath>Defs/IncidentDef[defName="MFI_DiplomaticMarriage" or defName="MFI_HuntersLodge" or defName="MFI_Quest_PeaceTalks"]</xpath>
+
+                <value>
+
+                  <li Class = "RimQuest.RimQuest_ModExtension">
+                    <canBeARimQuest>false</canBeARimQuest>
+                  </li>
+                </value>
+
+              </nomatch>
+            </Operation>
+        </Patch>
+        <Expected>
+            <IncidentDef>
+                <defName>MFI_DiplomaticMarriage</defName>
+                <modExtensions>
+                    <li Class="RimQuest.RimQuest_ModExtension">
+                        <canBeARimQuest>false</canBeARimQuest>
+                    </li>
+                </modExtensions>
+            </IncidentDef>
+            <IncidentDef>
+                <defName>MFI_HuntersLodge</defName>
+                <modExtensions>
+                    <li Class="RimQuest.RimQuest_ModExtension">
+                        <canBeARimQuest>false</canBeARimQuest>
+                    </li>
+                </modExtensions>
+            </IncidentDef>
+        </Expected>
+    </Case>
+</Test>
