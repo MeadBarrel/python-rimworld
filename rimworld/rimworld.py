@@ -14,7 +14,7 @@ class _Modlist(NamedTuple):
     known_expansions: list[str]
 
 
-def load_xml_data(mods: Collection[Mod], game_version: GameVersion|None=None) -> etree._Element:
+def load_xml_data(mods: Collection[Mod], game_version: GameVersion|None=None) -> etree._ElementTree:
     loaded_package_ids = [mod.package_id for mod in mods]
     result = empty_defs()
     total_added = 0
