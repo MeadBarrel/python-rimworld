@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from rimworld.base import PatchOperation, PatchOperationResult
+from rimworld.base import PatchOperationBase, PatchOperationResult
 
 
 @dataclass(frozen=True)
 class PatchOperationBasicCounterResult(PatchOperationResult):
-    operation: PatchOperation
+    operation: PatchOperationBase
     _nodes_affected: int
 
     def is_successful(self) -> bool:
@@ -19,7 +19,7 @@ class PatchOperationBasicCounterResult(PatchOperationResult):
 
 @dataclass(frozen=True)
 class PatchOperationBasicConditionalResult(PatchOperationResult):
-    operation: PatchOperation
+    operation: PatchOperationBase
     matched: bool
     child_result: PatchOperationResult|None
 

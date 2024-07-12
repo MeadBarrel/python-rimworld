@@ -1,7 +1,7 @@
 from .gameversion import *
 from dataclasses import field, dataclass
 from typing import Type
-from .base import World, PatchOperation
+from .base import World, PatchOperationBase
 from .patch.add import PatchOperationAdd
 from .patch.insert import PatchOperationInsert
 from .patch.remove import PatchOperationRemove
@@ -36,4 +36,4 @@ DEFAULT_PATCH_OPERATIONS = [
 
 @dataclass
 class Rimworld(World):
-    patch_operations: list[Type[PatchOperation]] = field(default_factory=lambda: DEFAULT_PATCH_OPERATIONS)
+    patch_operations: list[Type[PatchOperationBase]] = field(default_factory=lambda: DEFAULT_PATCH_OPERATIONS)

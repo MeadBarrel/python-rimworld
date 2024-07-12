@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 from lxml import etree
 
-from rimworld.base import PatchOperation, World, unused, PatchOperationMeta
+from rimworld.base import *
 from ._result import PatchOperationBasicCounterResult
 from ._base import *
 
