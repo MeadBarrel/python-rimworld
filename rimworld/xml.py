@@ -26,6 +26,7 @@ def load_xml(filepath: Path) -> etree._ElementTree:
     parser = etree.XMLParser(recover=True)
     with filepath.open('rb') as f:
         content = f.read()
+        etree.ElementTree
         return etree.XML(content, parser=parser)
 
 

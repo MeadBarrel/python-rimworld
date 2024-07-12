@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 from lxml import etree
 
-from rimworld.rimworld import Rimworld
+from rimworld.base import *
 from ._base import *
 
 
@@ -17,7 +17,7 @@ class PatchOperationTestResult(PatchOperationResult):
     def exception(self) -> Exception | None:
         return None
 
-    def count_nodes_affected(self) -> int:
+    def nodes_affected(self) -> int:
         return 0
 
 
@@ -25,16 +25,13 @@ class PatchOperationTestResult(PatchOperationResult):
 class PatchOperationTest(PatchOperation):
     xpath: str
 
-    def apply(
-            self, 
-            xml: etree._ElementTree, 
-            *_,
-            ) -> PatchOperationTestResult:
-        found = xpath_elements(xml, self.xpath)
+    def _apply(self, world: World) -> PatchOperationTestResult:
+        found = xpath_elements(world.xml, self.xpath)
         return PatchOperationTestResult(self, bool(found))
 
     @classmethod
-    def from_xml(cls, node: etree._Element) -> Self:
+    def from_xml(cls, world: World, node: etree._Element) -> Self:
+        unused(world)
         xpath = get_xpath(node)
         return cls(
                 PatchOperationMeta.from_xml(node),

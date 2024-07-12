@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from typing import Self
 from lxml import etree
 
-from ._base import *
+from rimworld.base import PatchOperation, World, unused, PatchOperationMeta
 from ._result import PatchOperationBasicCounterResult
+from ._base import *
 
 
 @dataclass(frozen=True)
@@ -12,12 +13,8 @@ class PatchOperationAdd(PatchOperation):
     value: list[SafeElement]
     append: bool
 
-    def apply(
-            self, 
-            xml: etree._ElementTree, 
-            *_,
-            ) -> PatchOperationBasicCounterResult:
-        found = xpath_elements(xml, self.xpath)
+    def _apply(self, world: World) -> PatchOperationBasicCounterResult:
+        found = xpath_elements(world.xml, self.xpath)
 
         if self.append:
             for elt in found:
@@ -29,7 +26,8 @@ class PatchOperationAdd(PatchOperation):
         return PatchOperationBasicCounterResult(self, len(found))
 
     @classmethod
-    def from_xml(cls, node: etree._Element) -> Self:
+    def from_xml(cls, world: World, node: etree._Element) -> Self:
+        unused(world)
         xpath = get_xpath(node)
         value = get_value(node)
         append =get_order_append(node, True)

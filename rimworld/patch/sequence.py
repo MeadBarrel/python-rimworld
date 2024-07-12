@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self, cast
 from lxml import etree
 
-from rimworld.rimworld import Rimworld
+from rimworld.base import *
 from ._base import *
 
 
@@ -22,8 +22,8 @@ class PatchOperationSequenceResult(PatchOperationResult):
                     cast(list[Exception], exceptions)
                     )
 
-    def count_nodes_affected(self) -> int:
-        return sum(r.count_nodes_affected() for r in self.results)
+    def nodes_affected(self) -> int:
+        return sum(r.nodes_affected() for r in self.results)
 
 
 
@@ -32,24 +32,19 @@ class PatchOperationSequence(PatchOperation):
 
     operations: list[PatchOperation]
 
-    def apply(
-            self, 
-            xml: etree._ElementTree, 
-            patcher: Patcher,
-            rimworld: Rimworld,
-            ) -> PatchOperationSequenceResult:
+    def _apply(self, world: World) -> PatchOperationSequenceResult:
         results = []
         for operation in self.operations:
-            operation_result = patcher.apply(rimworld, xml, operation)
+            operation_result = operation.apply(world)
             results.append(operation_result)
             if not operation_result.is_successful:
                 break
         return PatchOperationSequenceResult(self, results)
 
     @classmethod
-    def from_xml(cls, node: etree._Element, patcher: Patcher) -> Self:
+    def from_xml(cls, world: World, node: etree._Element) -> Self:
 
-        operations = patcher.collect_patches(
+        operations = world.collect_patch_operations(
                 get_element(node, 'operations'),
                 tag='li',
                 )

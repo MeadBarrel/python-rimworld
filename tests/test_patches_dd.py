@@ -1,11 +1,11 @@
 from pathlib import Path
 from lxml import etree
-from rimworld import find_xmls
+from rimworld import Rimworld
+from rimworld.xml import find_xmls
+from rimworld.base import unused
 import pytest
 
 from rimworld.mod import Mod
-from rimworld.patch import BasePatcher
-from rimworld.rimworld import Rimworld
 from rimworld.xml import load_xml
 
 
@@ -37,15 +37,16 @@ def make_parameters():
                         ]
             else:
                 mods_used = []
-            rimworld = Rimworld(mods=mods_used)
-            skip_unknown_operations = case.find('SkipUnknownOperations') is not None
-            patcher = BasePatcher(skip_unknown_operations)
+            tree = etree.ElementTree(defs)
+            rimworld = Rimworld(
+                    mods=mods_used,
+                    xml=tree,
+                    skip_unknown_operations=case.find('SkipUnknownOperations') is not None
+                    )
             result.append((
                     str(filename),
                     name,
                     rimworld,
-                    patcher,
-                    defs,
                     patch,
                     expected,
                     ))
@@ -54,30 +55,24 @@ def make_parameters():
 parameters = make_parameters()
 
 
-@pytest.mark.parametrize(('file', 'case', 'rimworld', 'patcher', 'defs', 'patch', 'expected'), parameters)
+@pytest.mark.parametrize(('file', 'case', 'world', 'patch', 'expected'), parameters)
 def test_patches_dd(
         file: str, 
         case: str|None, 
-        rimworld: Rimworld,
-        patcher: BasePatcher, 
-        defs: etree._Element,
+        world: Rimworld, 
         patch: etree._Element,
         expected: etree._Element
         ):
-    _unused(file)
-    _unused(case)
-    tree = etree.ElementTree(defs)
-    patcher.patch(rimworld, tree, patch)
+    unused(file)
+    unused(case)
+    world.patch(etree.ElementTree(patch))
     
     expected.tag = 'Defs'
-    assert_xml_eq(defs, expected)
+    assert_xml_eq(world.xml.getroot(), expected)
 
 
-def _unused(_):
-    pass
 
-
-def assert_xml_eq(e1, e2, path=''):
+def assert_xml_eq(e1: etree._Element, e2: etree._Element, path=''):
     if not isinstance(e1, etree._Element):
         raise AssertionError(f'e1 ({e1}) is {type(e1)}, not _Element')
     if not isinstance(e2, etree._Element):
