@@ -10,11 +10,11 @@ from ._result import PatchOperationBasicConditionalResult
 @dataclass(frozen=True)
 class PatchOperationConditional(PatchOperation):
     xpath: str
-    match: PatchOperation|None
-    nomatch: PatchOperation|None
+    match: PatchOperationBase|None
+    nomatch: PatchOperationBase|None
 
     def _apply(self, world: World) -> PatchOperationBasicConditionalResult:
-        matches = bool(xpath_elements(world.xml, self.xpath))
+        matches = bool(xpath_elements(world, self.xpath))
         if matches:
             return PatchOperationBasicConditionalResult(
                     self,

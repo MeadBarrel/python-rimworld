@@ -200,8 +200,8 @@ def get_element(xml: etree._Element, tag: str) -> etree._Element:
     return elt
 
 
-def xpath_elements(xml: etree._ElementTree, xpath: str) -> list[etree._Element]:
-    found = xml.xpath(xpath)
+def xpath_elements(world: World, xpath: str) -> list[etree._Element]:
+    found = world.xpath(xpath)
 
     if isinstance(found , etree._Element):
         found = [found]

@@ -105,3 +105,4 @@ def find_xmls(path: Path) -> list[Path]:
         if p.suffix == '.xml':
             result.append(p)
     return result
+

@@ -32,21 +32,6 @@ def load_xml_data(mods: Collection[Mod], game_version: GameVersion|None=None) ->
     return result
 
 
-def load_mods(path: Path|Collection[Path]) -> list[Mod]:
-    if isinstance(path, Path):
-        if not path.is_dir():
-            return []
-        if is_mod_folder(path):
-            return [Mod.load(path)]
-        return load_mods(list(path.iterdir()))
-    
-    result = []
-    for p in path:
-        result.extend(load_mods(p))
-
-    return result
-
-
 def read_modlist(filepath: Path) -> _Modlist:
     """
     Read and parse the modlist XML file.
@@ -74,6 +59,3 @@ def read_modlist(filepath: Path) -> _Modlist:
     return _Modlist(cast(list[str], mods), cast(list[str], known_expansions))
 
 
-def is_mod_folder(path: Path) -> bool:
-    p = path.joinpath('About', 'About.xml')
-    return p.exists() and p.is_file()

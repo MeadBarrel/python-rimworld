@@ -13,7 +13,7 @@ class PatchOperationReplace(PatchOperation):
     value: list[SafeElement]
 
     def _apply(self, world: World) -> PatchOperationBasicCounterResult:
-        found = xpath_elements(world.xml, self.xpath)
+        found = xpath_elements(world, self.xpath)
 
         for f in found:
             parent = f.getparent()

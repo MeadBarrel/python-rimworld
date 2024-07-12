@@ -14,7 +14,7 @@ class PatchOperationInsert(PatchOperation):
     append: bool
 
     def _apply(self, world: World) -> PatchOperationBasicCounterResult:
-        found = xpath_elements(world.xml, self.xpath)
+        found = xpath_elements(world, self.xpath)
         if self.append:
             for f in found:
                 for v in reversed(self.value):

@@ -30,7 +30,7 @@ class PatchOperationSequenceResult(PatchOperationResult):
 @dataclass(frozen=True)
 class PatchOperationSequence(PatchOperation):
 
-    operations: list[PatchOperation]
+    operations: list[PatchOperationBase]
 
     def _apply(self, world: World) -> PatchOperationSequenceResult:
         results = []

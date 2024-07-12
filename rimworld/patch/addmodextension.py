@@ -13,7 +13,7 @@ class PatchOperationAddModExtension(PatchOperation):
     value: list[SafeElement]
 
     def _apply(self, world: World) -> PatchOperationBasicCounterResult:
-        found = xpath_elements(world.xml, self.xpath)
+        found = xpath_elements(world, self.xpath)
 
         for elt in found:
             mod_extensions = elt.find('modExtensions')

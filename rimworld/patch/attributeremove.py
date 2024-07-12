@@ -13,7 +13,7 @@ class PatchOperationAttributeRemove(PatchOperation):
     attribute: str
 
     def _apply(self, world: World) -> PatchOperationBasicCounterResult:
-        found = xpath_elements(world.xml, self.xpath)
+        found = xpath_elements(world, self.xpath)
 
         for elt in found:
             elt.attrib.pop(self.attribute)

@@ -12,7 +12,7 @@ class PatchOperationRemove(PatchOperation):
     xpath: str
 
     def _apply(self, world: World) -> PatchOperationResult:
-        found = xpath_elements(world.xml, self.xpath)
+        found = xpath_elements(world, self.xpath)
         for elt in found:
             parent = elt.getparent()
             if parent is None:

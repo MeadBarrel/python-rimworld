@@ -11,8 +11,8 @@ from ._result import PatchOperationBasicConditionalResult
 @dataclass(frozen=True)
 class PatchOperationFindMod(PatchOperation):
     mods: list[str]
-    match: PatchOperation|None
-    nomatch: PatchOperation|None
+    match: PatchOperationBase|None
+    nomatch: PatchOperationBase|None
 
     def _apply(self, world: World) -> PatchOperationBasicConditionalResult:
         matches = all(m in world.active_package_names for m in self.mods)

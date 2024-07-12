@@ -26,7 +26,7 @@ class PatchOperationTest(PatchOperation):
     xpath: str
 
     def _apply(self, world: World) -> PatchOperationTestResult:
-        found = xpath_elements(world.xml, self.xpath)
+        found = xpath_elements(world, self.xpath)
         return PatchOperationTestResult(self, bool(found))
 
     @classmethod
