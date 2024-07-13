@@ -21,18 +21,23 @@ class World:
     patcher: Patcher|None
 
     @classmethod
-    def from_settings(cls, settings: Settings|None=None, patcher: Patcher|None=None) -> Self:
+    def from_settings(
+            cls, 
+            settings: Settings|None=None, 
+            patcher: Patcher|None=None,
+            add_metadata: bool=False,
+            ) -> Self:
         world_settings = WorldSettings.from_settings(settings)
-        return cls.new(world_settings, patcher)
+        return cls.new(world_settings, patcher, add_metadata)
         
 
     @classmethod
-    def new(cls, settings: WorldSettings, patcher: Patcher|None=None) -> Self:
+    def new(cls, settings: WorldSettings, patcher: Patcher|None=None, add_metadata: bool=False) -> Self:
         patcher = patcher or WorldPatcher()
         xml = etree.ElementTree(etree.Element('Defs'))
         context = PatchContext(xml, settings, patcher)
         for mod in settings.mods:
-            merge_mod_data(settings, xml, mod)
+            merge_mod_data(settings, xml, mod, add_metadata=add_metadata)
             apply_mod_patches(context, mod)
         return cls(
                 settings,
@@ -42,7 +47,12 @@ class World:
 
 
 
-def merge_mod_data(settings: WorldSettings, xml: etree._ElementTree, mod: Mod):
+def merge_mod_data(
+        settings: WorldSettings, 
+        xml: etree._ElementTree, 
+        mod: Mod,
+        add_metadata: bool=False,
+        ):
     logging.getLogger(__name__).info(f'Loading mod data: {mod}')
     for path in mod.get_mod_folders(settings.version, settings.active_package_ids):
         defs_folder = path.joinpath('Defs')
@@ -55,7 +65,10 @@ def merge_mod_data(settings: WorldSettings, xml: etree._ElementTree, mod: Mod):
                     continue
                 logging.getLogger(__name__).info(f'Merging file: {str(xml_path)}')
                 file_xml = load_xml(xml_path)
-                merge(xml, file_xml)
+
+                metadata = {'added_by_mod': mod.package_id} if add_metadata else None
+
+                merge(xml, file_xml, metadata=metadata)
 
 
 def apply_mod_patches(context: PatchContext, mod: Mod):

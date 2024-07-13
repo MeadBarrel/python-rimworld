@@ -139,9 +139,9 @@ class Mod:
 
             structure[v_version] = []
 
-            for li in elt.findall('li'):
+            for li in reversed(elt.findall('li')):
                 modactive = li.get('IfModActive')
-                if (not modactive) or modactive in loaded_mods:
+                if (not modactive) or modactive.lower() in loaded_mods:
                     text = li.text or ''
                     structure[v_version].append('' if text.strip()=='/' else text)
 

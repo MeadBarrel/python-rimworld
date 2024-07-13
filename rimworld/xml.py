@@ -112,7 +112,7 @@ def load_xml(filepath: Path) -> etree._ElementTree:
         return etree.ElementTree(etree.fromstring(content, parser=parser))
 
 
-def merge(merge_to: etree._ElementTree, merge_with: etree._ElementTree) -> int:
+def merge(merge_to: etree._ElementTree, merge_with: etree._ElementTree, metadata: dict[str, str]|None=None) -> int:
     """
     Merges two XML elements by appending children from one element to the other.
 
@@ -136,6 +136,11 @@ def merge(merge_to: etree._ElementTree, merge_with: etree._ElementTree) -> int:
     added = 0
 
     for node in merge_with_root.iterchildren():
+        try:
+            for k, v in (metadata or {}).items():
+                node.set(k, v)
+        except TypeError:
+            pass
         merge_to_root.append(node)
         added += 1
 

@@ -2,7 +2,6 @@ from pathlib import Path
 from lxml import etree
 from rimworld.gameversion import GameVersion
 from rimworld.xml import find_xmls
-from rimworld.base import unused
 from rimworld.patch import *
 from rimworld.patch.patcher import WorldPatcher
 import pytest

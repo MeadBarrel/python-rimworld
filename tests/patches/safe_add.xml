@@ -1,0 +1,191 @@
+<Test>
+    <Case>
+        <Name>SD1NotExist</Name>
+        <Defs>
+            <ThingDef>
+                <plant>
+                </plant>
+            </ThingDef>
+        </Defs>
+
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationSafeAdd">
+                <xpath>Defs/ThingDef/plant</xpath>
+                <safetyDepth>1</safetyDepth>
+                <value>
+                    <sowMinSkill>1</sowMinSkill>
+                </value>
+                </Operation>            
+        </Patch>
+
+        <Expected>
+            <ThingDef>
+                <plant>
+                    <sowMinSkill>1</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>SD1Exists</Name>
+        <Defs>
+            <ThingDef>
+                <plant>
+                    <sowMinSkill>2</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Defs>
+
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationSafeAdd">
+                <safetyDepth>1</safetyDepth>
+                <xpath>Defs/ThingDef/plant</xpath>
+                <value>
+                    <sowMinSkill>1</sowMinSkill>
+                </value>
+                </Operation>            
+        </Patch>
+
+        <Expected>
+            <ThingDef>
+                <plant>
+                    <sowMinSkill>2</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>SD1ExistsCheckAttributes</Name>
+        <Defs>
+            <ThingDef>
+                <plant>
+                    <sowMinSkill attr="2">2</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Defs>
+
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationSafeAdd">
+                <checkAttributes>true</checkAttributes>
+                <safetyDepth>1</safetyDepth>
+                <xpath>Defs/ThingDef/plant</xpath>
+                <value>
+                    <sowMinSkill attr="1">1</sowMinSkill>
+                </value>
+                </Operation>            
+        </Patch>
+
+        <Expected>
+            <ThingDef>
+                <plant>
+                    <sowMinSkill attr="2">2</sowMinSkill>
+                    <sowMinSkill attr="1">1</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>SD1MultipleByInnerText</Name>
+        <Defs>
+            <ThingDef>
+                <plant>
+                    <soil>
+                        <li>fertile</li>
+                    </soil>
+                </plant>
+            </ThingDef>
+        </Defs>
+
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationSafeAdd">
+                <xpath>Defs/ThingDef/plant/soil</xpath>
+                <compare>InnerText</compare>
+                <value>
+                    <li>fertile</li>
+                    <li>barren</li>
+                </value>
+            </Operation>            
+        </Patch>
+
+        <Expected>
+            <ThingDef>
+                <plant>
+                    <soil>
+                        <li>fertile</li>
+                        <li>barren</li>
+                    </soil>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>SD1Multiple</Name>
+        <Defs>
+            <ThingDef>
+                <plant>
+                    <soil>
+                        <li>fertile</li>
+                    </soil>
+                </plant>
+            </ThingDef>
+        </Defs>
+
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationSafeAdd">
+                <xpath>Defs/ThingDef/plant/soil</xpath>
+                <compare>Both</compare>
+                <value>
+                    <li>fertile</li>
+                    <li>barren</li>
+                </value>
+            </Operation>            
+        </Patch>
+
+        <Expected>
+            <ThingDef>
+                <plant>
+                    <soil>
+                        <li>fertile</li>
+                        <li>barren</li>
+                    </soil>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>SD-1Multiple</Name>
+        <Defs>
+            <ThingDef>
+                <plant>
+                    <soil>
+                        <li>fertile</li>
+                    </soil>
+                </plant>
+            </ThingDef>
+        </Defs>
+
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationSafeAdd">
+                <xpath>Defs/ThingDef/plant</xpath>
+                <compare>Both</compare>
+                <value>
+                    <soil>
+                        <li>fertile</li>
+                        <li>barren</li>
+                    </soil>
+                </value>
+            </Operation>            
+        </Patch>
+
+        <Expected>
+            <ThingDef>
+                <plant>
+                    <soil>
+                        <li>fertile</li>
+                        <li>barren</li>
+                    </soil>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+</Test>

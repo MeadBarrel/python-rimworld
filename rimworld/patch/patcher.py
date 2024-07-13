@@ -19,6 +19,7 @@ from .operations.remove import PatchOperationRemove
 from .operations.replace import PatchOperationReplace
 from .operations.sequence import PatchOperationSequence
 from .operations.setname import PatchOperationSetName
+from .xmlextensions.safeadd import PatchOperationSafeAdd
 
 
 class Success(Enum):
@@ -146,5 +147,10 @@ class WorldPatcher(Patcher):
                 return PatchOperationSequence.from_xml(self, node)
             case 'PatchOperationSetName':
                 return PatchOperationSetName.from_xml(node)
+
+            # XmlExtensions
+            case 'XmlExtensions.PatchOperationSafeAdd':
+                return PatchOperationSafeAdd.from_xml(node)
+
             case _:
                 return PatchOperationUnknown()
