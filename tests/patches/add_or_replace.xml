@@ -1,0 +1,51 @@
+<Test>
+    <Case>
+        <Name>NotExists</Name>
+        <Defs>
+            <ThingDef>
+                <plant>            
+                </plant>
+            </ThingDef>
+        </Defs>
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationAddOrReplace">
+                <xpath>Defs/ThingDef/plant</xpath>
+                <value>
+                    <sowMinSkill>2</sowMinSkill>
+                </value>                
+            </Operaton>
+        </Patch>
+        <Expected>
+            <ThingDef>
+                <plant>            
+                    <sowMinSkill>2</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+    <Case>
+        <Name>Exists</Name>
+        <Defs>
+            <ThingDef>
+                <plant>            
+                    <sowMinSkill>1</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Defs>
+        <Patch>
+            <Operation Class="XmlExtensions.PatchOperationAddOrReplace">
+                <xpath>Defs/ThingDef/plant</xpath>
+                <value>
+                    <sowMinSkill>2</sowMinSkill>
+                </value>                
+            </Operaton>
+        </Patch>
+        <Expected>
+            <ThingDef>
+                <plant>            
+                    <sowMinSkill>2</sowMinSkill>
+                </plant>
+            </ThingDef>
+        </Expected>
+    </Case>
+</Test>
