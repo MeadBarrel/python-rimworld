@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import Generic, Protocol, cast
 from lxml import etree
 from pathlib import Path
 
@@ -12,6 +14,87 @@ class DifferentRootsError(Exception):
     pass
 
 
+@dataclass(frozen=True)
+class TextParent:
+    node: etree._Element
+
+    @property
+    def text(self) -> str:
+        assert self.node.text is not None
+        return self.node.text
+
+    @text.setter
+    def text(self, value):
+        self.node.text = value
+
+    def __str__(self) -> str:
+        return self.text
+
+
+@dataclass(frozen=True)
+class AttributeParent:
+    node: etree._Element
+    attribute: str
+
+    @property
+    def value(self):
+        assert self.node.get(self.attribute) is not None
+        return self.node.get(self.attribute)
+
+    @value.setter
+    def value(self, value):
+        self.node.set(self.attribute, value)
+
+
+
+class Xpath[T]:
+    @staticmethod
+    def choose(xpath: str) -> 'Xpath':
+        if xpath.endswith('text()'):
+            return TextXpath(f'{xpath}/..')
+        if xpath.rsplit('/', 1)[-1].startswith('@'):
+            return AttributeXpath(f'{xpath}/..', xpath.rsplit('/', 1)[-1][1:])
+        return ElementXpath(xpath)
+
+    def search(self, xml: etree._ElementTree|etree._Element) -> list[T]:
+        ...
+
+
+@dataclass(frozen=True)
+class ElementXpath(Xpath[etree._Element]):
+    xpath: str
+
+    def search(self, xml: etree._ElementTree|etree._Element) -> list[etree._Element]:
+        result = xml.xpath(self.xpath)
+        assert isinstance(result, list)
+        assert all(isinstance(item, etree._Element) for item in result)
+        return cast(list[etree._Element], result)
+
+
+@dataclass(frozen=True)
+class AttributeXpath(Xpath[AttributeParent]):
+    xpath: str
+    attribute: str
+
+    def search(self, xml: etree._ElementTree | etree._Element) -> list[AttributeParent]:
+        result = xml.xpath(self.xpath)
+        assert isinstance(result, list)
+        assert all(isinstance(item, etree._Element) and item.get(self.attribute) is not None for item in result)
+        return [AttributeParent(cast(etree._Element, item), self.attribute) for item in result]
+
+
+@dataclass(frozen=True)
+class TextXpath(Xpath[TextParent]):
+    xpath: str
+
+    def search(self, xml: etree._ElementTree | etree._Element) -> list[TextParent]:
+        result = xml.xpath(self.xpath)
+        assert isinstance(result, list)
+        assert all(isinstance(item, etree._Element) and item.text is not None for item in result)
+        return [TextParent(cast(etree._Element, item)) for item in result]
+
+
+
 def load_xml(filepath: Path) -> etree._ElementTree:
     """
     Loads an XML file and returns its root element.
@@ -23,11 +106,10 @@ def load_xml(filepath: Path) -> etree._ElementTree:
     Returns:
         etree._Element: Root element of the loaded XML file.
     """
-    parser = etree.XMLParser(recover=True)
+    parser = etree.XMLParser(recover=True, remove_blank_text=True)
     with filepath.open('rb') as f:
         content = f.read()
-        etree.ElementTree
-        return etree.XML(content, parser=parser)
+        return etree.ElementTree(etree.fromstring(content, parser=parser))
 
 
 def merge(merge_to: etree._ElementTree, merge_with: etree._ElementTree) -> int:
@@ -69,22 +151,6 @@ def empty_defs() -> etree._ElementTree:
         etree._Element: Root element of the created XML tree with tag 'Defs'.
     """
     return etree.ElementTree(etree.Element('Defs'))
-
-
-def empty_tree(root_node_tag: str) -> etree._Element:
-    """
-    Creates an empty XML tree with a specified root tag.
-
-
-    Args:
-        root_node_tag (str): The tag name for the root element.
-
-    Returns:
-        etree._Element: Root element of the created XML tree with the specified tag.
-
-    """
-    return etree.fromstring(f'<{root_node_tag}></{root_node_tag}>')
-
 
 
 def find_xmls(path: Path) -> list[Path]:

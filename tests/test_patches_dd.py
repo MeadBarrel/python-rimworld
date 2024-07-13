@@ -1,8 +1,10 @@
 from pathlib import Path
 from lxml import etree
-from rimworld import Rimworld
+from rimworld.gameversion import GameVersion
 from rimworld.xml import find_xmls
 from rimworld.base import unused
+from rimworld.patch import *
+from rimworld.patch.patcher import WorldPatcher
 import pytest
 
 from rimworld.mod import Mod
@@ -38,15 +40,19 @@ def make_parameters():
             else:
                 mods_used = []
             tree = etree.ElementTree(defs)
-            rimworld = Rimworld(
-                    mods=mods_used,
+            settings = WorldSettings(
+                    mods=tuple(mods_used),
+                    version=GameVersion.from_string('1.5')
+                    )
+            context = PatchContext(
+                    settings=settings,
                     xml=tree,
-                    skip_unknown_operations=case.find('SkipUnknownOperations') is not None
+                    patcher=WorldPatcher(),
                     )
             result.append((
                     str(filename),
                     name,
-                    rimworld,
+                    context,
                     patch,
                     expected,
                     ))
@@ -55,20 +61,18 @@ def make_parameters():
 parameters = make_parameters()
 
 
-@pytest.mark.parametrize(('file', 'case', 'world', 'patch', 'expected'), parameters)
+@pytest.mark.parametrize(('file', 'case', 'context', 'patch', 'expected'), parameters)
 def test_patches_dd(
         file: str, 
         case: str|None, 
-        world: Rimworld, 
+        context: PatchContext, 
         patch: etree._Element,
         expected: etree._Element
         ):
-    unused(file)
-    unused(case)
-    world.patch(etree.ElementTree(patch))
+    context.patch(etree.ElementTree(patch))
     
     expected.tag = 'Defs'
-    assert_xml_eq(world.xml.getroot(), expected)
+    assert_xml_eq(context.xml.getroot(), expected)
 
 
 

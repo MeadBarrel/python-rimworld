@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from typing import Self
 from lxml import etree
 
-from rimworld.base import *
-from ._base import *
+from rimworld.xml import Xpath
+
+from .. import *
 
 
 @dataclass(frozen=True)
@@ -23,17 +24,14 @@ class PatchOperationTestResult(PatchOperationResult):
 
 @dataclass(frozen=True)
 class PatchOperationTest(PatchOperation):
-    xpath: str
+    xpath: Xpath
 
-    def _apply(self, world: World) -> PatchOperationTestResult:
-        found = xpath_elements(world, self.xpath)
+    def apply(self, context: PatchContext) -> PatchOperationResult:
+        found = self.xpath.search(context.xml)
         return PatchOperationTestResult(self, bool(found))
 
     @classmethod
-    def from_xml(cls, world: World, node: etree._Element) -> Self:
-        unused(world)
-        xpath = get_xpath(node)
+    def from_xml(cls, node: etree._Element) -> Self:
         return cls(
-                PatchOperationMeta.from_xml(node),
-                xpath,
+                xpath=get_xpath(node),
                 )

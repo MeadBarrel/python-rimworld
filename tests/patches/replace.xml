@@ -25,4 +25,25 @@
             </ExampleDef>
         </Expected>
     </Case>
+    <Case>
+        <Name>ReplaceText</Name>
+        <Defs>
+            <TerrainDef>
+                <defName>Bridge</defName>
+                <label>Bridge</label>
+            </TerrainDef>
+        </Defs>
+        <Patch>
+            <Operation Class="PatchOperationReplace">
+                <xpath>/Defs/TerrainDef[defName="Bridge"]/label/text()</xpath>
+                <value>wood bridge</value>
+            </Operation>        
+        </Patch>
+        <Expected>
+            <TerrainDef>
+                <defName>Bridge</defName>
+                <label>wood bridge</label>
+            </TerrainDef>
+        </Expected>
+    </Case>
 </Test>

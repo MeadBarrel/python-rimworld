@@ -2,19 +2,19 @@ from dataclasses import dataclass
 from typing import Self
 from lxml import etree
 
-from rimworld.base import *
-from ._base import *
-from ._result import PatchOperationBasicCounterResult
+from rimworld.xml import ElementXpath
+
+from .. import *
 
 
 @dataclass(frozen=True)
 class PatchOperationInsert(PatchOperation):
-    xpath: str
+    xpath: ElementXpath
     value: list[SafeElement]
     append: bool
 
-    def _apply(self, world: World) -> PatchOperationBasicCounterResult:
-        found = xpath_elements(world, self.xpath)
+    def apply(self, context: PatchContext) -> PatchOperationResult:
+        found = self.xpath.search(context.xml)
         if self.append:
             for f in found:
                 for v in reversed(self.value):
@@ -27,14 +27,12 @@ class PatchOperationInsert(PatchOperation):
         return PatchOperationBasicCounterResult(self, len(found))
 
     @classmethod
-    def from_xml(cls, world: World, node: etree._Element) -> Self:
-        unused(world)
+    def from_xml(cls, node: etree._Element) -> Self:
         xpath = get_xpath(node)
-        value = get_value(node)
-        append = get_order_append(node, False)
+        if not isinstance(xpath, ElementXpath):
+            raise MalformedPatchError('Insert only works on elements')
         return cls(
-                PatchOperationMeta.from_xml(node),
-                xpath, 
-                value, 
-                append
+                xpath=xpath, 
+                value=get_value_elt(node), 
+                append=get_order_append(node, False),
                 )

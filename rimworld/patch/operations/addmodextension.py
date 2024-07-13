@@ -2,18 +2,18 @@ from dataclasses import dataclass
 from typing import Self
 from lxml import etree
 
-from rimworld.base import *
-from ._base import *
-from ._result import PatchOperationBasicCounterResult
+from rimworld.xml import ElementXpath
+
+from .. import *
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class PatchOperationAddModExtension(PatchOperation):
-    xpath: str
+    xpath: ElementXpath
     value: list[SafeElement]
 
-    def _apply(self, world: World) -> PatchOperationBasicCounterResult:
-        found = xpath_elements(world, self.xpath)
+    def apply(self, context: PatchContext) -> PatchOperationResult:
+        found = self.xpath.search(context.xml)
 
         for elt in found:
             mod_extensions = elt.find('modExtensions')
@@ -26,13 +26,12 @@ class PatchOperationAddModExtension(PatchOperation):
         return PatchOperationBasicCounterResult(self, len(found))
 
     @classmethod
-    def from_xml(cls, world: World, node: etree._Element) -> Self:
-        unused(world)
+    def from_xml(cls, node: etree._Element) -> Self:
         xpath = get_xpath(node)
-        value = get_value(node)
+        if not isinstance(xpath, ElementXpath):
+            raise MalformedPatchError('AddModExtension only operates on elements')
         return cls(
-                PatchOperationMeta.from_xml(node),
-                xpath, 
-                value,
+                xpath=xpath,
+                value=get_value_elt(node),
                 )
 

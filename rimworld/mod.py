@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Self, cast
+from typing import Collection, Iterator, Self, cast
 from dataclasses import dataclass
 from pathlib import Path
 from bisect import bisect_left
@@ -91,7 +91,7 @@ class Mod:
     def get_mod_folders(
             self, 
             game_version: GameVersion|None, # The game version; use latest available version if None
-            loaded_mods: list[str]|None=None  # List of loaded mod ids
+            loaded_mods: Collection[str]|None=None  # List of loaded mod ids
             ) -> list[Path]:
         """ Return a list of mod folders based on the game version and loaded mods """
         
@@ -118,7 +118,7 @@ class Mod:
 
     def _get_mod_folders_loadfolders(
             self, game_version: GameVersion|None,  # The game version; use latest available version if None
-            loaded_mods: list[str]|None=None  #  List of loaded mod ids
+            loaded_mods: Collection[str]|None=None  #  List of loaded mod ids
             ) -> list[Path]:
         """ Return a list of mod folders based on LoadFolders.xml """        
 
@@ -130,7 +130,7 @@ class Mod:
 
         structure = {}
 
-        for elt in xml.iterchildren():
+        for elt in xml.getroot():
             v_version_re_match = V_VERSION_RE.match(elt.tag)
             if not v_version_re_match:
                 raise RuntimeError(f'Unknown item in ListFolders.xml: {elt.tag}')
@@ -151,6 +151,9 @@ class Mod:
             return []
 
         return [self.path.joinpath(x) for x in structure[matching_version]]
+
+    def get_def_files(self) -> Iterator[Path]:
+        pass
 
 
 def _get_matching_version(versions: list[GameVersion], version: GameVersion|None) -> GameVersion|None:
