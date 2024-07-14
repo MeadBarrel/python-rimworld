@@ -45,4 +45,4 @@ class Settings(BaseSettings):
 
 def create_settings() -> Settings:
     """ just a helper function to avoid type: ignore everywhere """
-    return Settings()  # type: ignore
+    return Settings(_cli_parse_args=[])  # type: ignore
