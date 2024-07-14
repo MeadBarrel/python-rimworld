@@ -36,3 +36,24 @@ class PatchOperationInsert(PatchOperation):
                 value=get_value_elt(node), 
                 append=get_order_append(node, False),
                 )
+
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationInsert')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        value = etree.Element('value')
+        if isinstance(self.value, str):
+            value.text = self.value
+        else:
+            value.extend([v.copy() for v in self.value])
+        node.append(value)
+
+        if self.append:
+            append = etree.Element('append')
+            append.text = 'Append'
+            node.append(append)
+
+

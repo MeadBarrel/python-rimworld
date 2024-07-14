@@ -35,3 +35,15 @@ class PatchOperationAddModExtension(PatchOperation):
                 value=get_value_elt(node),
                 )
 
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationAddModExtension')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        value = etree.Element('value')
+        value.extend([v.copy() for v in self.value])
+        node.append(value)
+
+

@@ -63,3 +63,19 @@ class PatchOperationSafeAdd(PatchOperation):
                 check_attributes=get_check_attributes(node),
                 )
 
+
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationAdd')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        set_compare(node, self.compare)
+        set_check_attributes(node, self.check_attributes)
+        set_safety_depth(node, self.safety_depth)
+
+        value = etree.Element('value')
+        value.extend([v.copy() for v in self.value])
+        node.append(value)
+

@@ -45,3 +45,20 @@ class PatchOperationAddOrReplace(PatchOperation):
                 check_attributes=get_check_attributes(node),
                 )
 
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationAdd')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        set_compare(node, self.compare)
+        set_check_attributes(node, self.check_attributes)
+
+        value = etree.Element('value')
+        if isinstance(self.value, str):
+            value.text = self.value
+        else:
+            value.extend([v.copy() for v in self.value])
+        node.append(value)
+

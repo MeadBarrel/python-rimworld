@@ -35,3 +35,11 @@ class PatchOperationTest(PatchOperation):
         return cls(
                 xpath=get_xpath(node),
                 )
+
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationTest')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+

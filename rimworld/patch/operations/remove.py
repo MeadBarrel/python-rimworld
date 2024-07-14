@@ -36,3 +36,10 @@ class PatchOperationRemove(PatchOperation):
         return cls(
                 xpath=cast(ElementXpath|TextXpath, xpath)
                 )
+
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationRemove')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)

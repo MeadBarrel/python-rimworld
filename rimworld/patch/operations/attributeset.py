@@ -31,3 +31,19 @@ class PatchOperationAttributeSet(PatchOperation):
                 attribute=get_text(node, 'attribute'),
                 value=get_text(node, 'value'),
                 )
+
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationAttributeSet')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        attribute = etree.Element('attribute')
+        attribute.text = self.attribute
+        node.append(attribute)
+
+        value = etree.Element('value')
+        value.text = self.value
+        node.append(value)
+

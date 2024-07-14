@@ -30,3 +30,14 @@ class PatchOperationAttributeRemove(PatchOperation):
                 attribute=get_text(node, 'attribute'),
                 )
 
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationAttributeRemove')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        attribute = etree.Element('attribute')
+        attribute.text = self.attribute
+        node.append(attribute)
+

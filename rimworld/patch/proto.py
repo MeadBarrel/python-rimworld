@@ -18,6 +18,9 @@ class PatchOperation(Protocol):
     def apply(self, context: 'PatchContext') -> 'PatchOperationResult':
         ...
 
+    def to_xml(self, node: etree._Element):
+        ...
+
 
 
 class Patcher(Protocol):

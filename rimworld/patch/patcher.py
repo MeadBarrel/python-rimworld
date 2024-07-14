@@ -1,3 +1,4 @@
+from copy import deepcopy
 from lxml import etree
 from rimworld.worldsettings import WorldSettings
 from .proto import *
@@ -73,10 +74,40 @@ class PatchOperationWrapper(PatchOperation):
             case Success.Invert:
                 return PatchOperationInverted(op_result)
 
+    def to_xml(self, node: etree._Element):
+        self.operation.to_xml(node)
+        if self.may_require:
+            node.set('MayRequire', ','.join(self.may_require))
+        if self.may_require_any_of:
+            node.set('MayRequireAnyOf', ','.join(self.may_require_any_of))
+        if self.success == Success.Normal:
+            return
+        n = etree.Element('success')
+        match self.success:
+            case Success.Always:
+                n.text = 'Always'
+            case Success.Never:
+                n.text = 'Never'
+            case Success.Invert:
+                n.text = 'Invert'
 
-class PatchOperationUnknown:
+
+
+@dataclass
+class PatchOperationUnknown(PatchOperation):
+    node: etree._Element
+
     def apply(self, context: PatchContext) -> 'PatchOperationResult':
         return PatchOperationSkipped(self)
+
+    def to_xml(self, node: etree._Element):
+        n = deepcopy(self.node)
+        for k, v in n.attrib.items():
+            node.set(k, v)
+        for c in n:
+            node.append(c)
+
+        
 
 
 class WorldPatcher(Patcher):
@@ -157,4 +188,4 @@ class WorldPatcher(Patcher):
                 return PatchOperationAddOrReplace.from_xml(node)
 
             case _:
-                return PatchOperationUnknown()
+                return PatchOperationUnknown(node)

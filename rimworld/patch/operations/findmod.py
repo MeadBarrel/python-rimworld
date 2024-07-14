@@ -43,3 +43,23 @@ class PatchOperationFindMod(PatchOperation):
                 match=match,
                 nomatch=nomatch,
                 )
+
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationFindMod')
+
+        mods = etree.Element('mods')
+        for mod in self.mods:
+            li = etree.Element('li')
+            li.text = mod
+            mods.append(mods)
+        node.append(mods)
+
+        if self.match is not None:
+            match = etree.Element('match')
+            self.match.to_xml(match)
+            node.append(match)
+        if self.nomatch is not None:
+            nomatch = etree.Element('nomatch')
+            self.nomatch.to_xml(nomatch)
+            node.append(nomatch)
+

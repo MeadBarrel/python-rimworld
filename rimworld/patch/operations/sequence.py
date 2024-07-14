@@ -50,3 +50,12 @@ class PatchOperationSequence(PatchOperation):
         return cls(
                 operations=operations,
                 )
+
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationSequence')
+
+        operations = etree.Element('operations')
+        for operation in self.operations:
+            n = etree.Element('li')
+            operation.to_xml(n)
+        node.append(operations)

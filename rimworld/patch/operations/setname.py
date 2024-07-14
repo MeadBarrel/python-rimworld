@@ -30,3 +30,13 @@ class PatchOperationSetName(PatchOperation):
                 name=get_text(node, 'name'),
                 )
 
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationSetName')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        name = etree.Element('name')
+        name.text = self.name
+        node.append(name)

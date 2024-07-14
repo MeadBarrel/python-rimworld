@@ -48,6 +48,8 @@ class AttributeParent:
 
 
 class Xpath[T]:
+    xpath: str
+
     @staticmethod
     def choose(xpath: str) -> 'Xpath':
         if xpath.endswith('text()'):

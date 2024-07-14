@@ -20,6 +20,13 @@ def get_safety_depth(node: etree._Element) -> int:
             raise MalformedPatchError('incorrect safetyDepth')
     return safety_depth
 
+def set_safety_depth(node: etree._Element, safety_depth: int):
+    if safety_depth == -1:
+        return
+    n = etree.Element('safetyDepth')
+    n.text = str(safety_depth)
+    node.append(n)
+
 
 def get_compare(node: etree._Element) -> Compare:
     match node.find('compare'):
@@ -34,6 +41,20 @@ def get_compare(node: etree._Element) -> Compare:
         case _:
             raise MalformedPatchError(f'Incorrect compare value')
 
+def set_compare(node: etree._Element, compare: Compare):
+    match compare:
+        case Compare.Name:
+            return
+        case Compare.InnerText:
+            n = etree.Element('compare')
+            n.text = 'InnerText'
+            node.append(n)
+        case Compare.Both:
+            n = etree.Element('compare')
+            n.text = 'Both'
+            node.append(n)
+
+
 def get_check_attributes(node: etree._Element) -> bool:
     match node.find('checkAttributes'):
         case None:
@@ -44,6 +65,15 @@ def get_check_attributes(node: etree._Element) -> bool:
             return True
         case _:
             raise MalformedPatchError(f'Incorrect checkAttributes value')
+
+def set_check_attributes(node: etree._Element, check_attributes: bool):
+    if not check_attributes:
+        return
+    n = etree.Element('checkAttributes')
+    n.text = 'true'
+    node.append(n)
+
+    
 
 def get_existing_node(compare: Compare, node: etree._Element, value: etree._Element) -> etree._Element|None:
     match compare:

@@ -51,3 +51,17 @@ class PatchOperationReplace(PatchOperation):
                 value=get_value(node),
                 )
 
+    def to_xml(self, node: etree._Element):
+        node.set('Class', 'PatchOperationReplace')
+
+        xpath = etree.Element('xpath')
+        xpath.text = self.xpath.xpath
+        node.append(xpath)
+
+        value = etree.Element('value')
+        if isinstance(self.value, str):
+            value.text = self.value
+        else:
+            value.extend([v.copy() for v in self.value])
+        node.append(value)
+
