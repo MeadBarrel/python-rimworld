@@ -56,9 +56,6 @@ class PatchOperationAddOrReplace(PatchOperation):
         set_check_attributes(node, self.check_attributes)
 
         value = etree.Element('value')
-        if isinstance(self.value, str):
-            value.text = self.value
-        else:
-            value.extend([v.copy() for v in self.value])
+        value.extend([v.copy() for v in self.value])
         node.append(value)
 
