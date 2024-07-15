@@ -1,3 +1,6 @@
+> [!CAUTION]
+> This is a heavily WIP project
+
 # RimWorld XML library
 
 This library is designed to assist with writing mods and mod patches for RimWorld. 
