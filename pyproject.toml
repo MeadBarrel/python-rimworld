@@ -11,14 +11,10 @@ bs4 = "^0.0.2"
 lxml = "^5.2.2"
 pydantic-settings = "^2.3.4"
 lxml-stubs = "^0.5.1"
-pygments = {version = "^2.18.0", optional = true, extras = ["pygments"]}
 xmltodict = "^0.13.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
-
-[tool.poetry.extras]
-pygments=["pygments"]
 
 [tool.pyright]
 pythonVersion = "3.12"
