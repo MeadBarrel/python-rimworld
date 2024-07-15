@@ -9,7 +9,6 @@ readme = "README.md"
 python = "^3.12"
 bs4 = "^0.0.2"
 lxml = "^5.2.2"
-pydantic-settings = "^2.3.4"
 lxml-stubs = "^0.5.1"
 xmltodict = "^0.13.0"
 
