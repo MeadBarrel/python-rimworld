@@ -1,17 +1,13 @@
 from dataclasses import dataclass
 import logging
-from os import walk
-from pathlib import Path
-from typing import Self, Sequence
+from typing import Self
 from lxml import etree
 from rimworld.mod import Mod
 from rimworld.patch.patcher import WorldPatcher
 
 from rimworld.patch.proto import PatchContext, Patcher
-from rimworld.settings import Settings
-from rimworld.xml import find_xmls, load_xml, merge
+from rimworld.xml import load_xml, merge
 from .worldsettings import WorldSettings
-from typing import cast
 
 
 @dataclass(frozen=True)
@@ -19,17 +15,6 @@ class World:
     settings: WorldSettings
     xml: etree._ElementTree
     patcher: Patcher|None
-
-    @classmethod
-    def from_settings(
-            cls, 
-            settings: Settings|None=None, 
-            patcher: Patcher|None=None,
-            add_metadata: bool=False,
-            ) -> Self:
-        world_settings = WorldSettings.from_settings(settings)
-        return cls.new(world_settings, patcher, add_metadata)
-        
 
     @classmethod
     def new(cls, settings: WorldSettings, patcher: Patcher|None=None, add_metadata: bool=False) -> Self:

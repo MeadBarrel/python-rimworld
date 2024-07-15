@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Self, Sequence, cast
+from typing import Sequence, cast
 from rimworld.gameversion import GameVersion
 
 from rimworld.mod import Mod
-from rimworld.settings import Settings, create_settings
 from rimworld.xml import load_xml
 
 
@@ -13,15 +12,6 @@ from rimworld.xml import load_xml
 class WorldSettings:
     mods: tuple[Mod]
     version: GameVersion
-
-    @classmethod
-    def from_settings(cls, settings: Settings|None=None) -> Self:
-        settings = settings or create_settings()
-        all_mods = load_mod_infos(settings.mod_folders)
-        active_package_ids, _ = read_modlist(settings.rimworld_modlist_filename)
-        mods = [m for m in all_mods if m.package_id in active_package_ids]
-        version = GameVersion.from_string('1.5')
-        return cls(tuple(mods), version)
 
     @cached_property
     def active_package_ids(self) -> set[str]:
