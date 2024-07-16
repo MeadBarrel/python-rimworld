@@ -1,49 +1,64 @@
+""" Provides PatchOperationAddModExtension """
+
 from dataclasses import dataclass
 from typing import Self
+
 from lxml import etree
 
+from rimworld.error import MalformedPatchError, NoNodesFound
+from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
+                                  PatchOperationResult)
+from rimworld.patch.result import (PatchOperationBasicCounterResult,
+                                   PatchOperationFailedResult)
+from rimworld.patch.serializers import (SafeElement, ensure_value,
+                                        ensure_xpath_elt)
+from rimworld.util import unused
 from rimworld.xml import ElementXpath
-
-from .. import *
 
 
 @dataclass(frozen=True, kw_only=True)
 class PatchOperationAddModExtension(PatchOperation):
-    xpath: ElementXpath
-    value: list[SafeElement]
+    """PatchOperationAddModExtension
 
-    def apply(self, context: PatchContext) -> PatchOperationResult:
+    https://rimworldwiki.com/wiki/Modding_Tutorials/PatchOperations#PatchOperationAddModExtension
+    """
+
+    xpath: ElementXpath
+    value: SafeElement
+
+    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+        unused(patcher)
+
         found = self.xpath.search(context.xml)
 
+        if not found:
+            return PatchOperationFailedResult(self, NoNodesFound(str(self.xpath)))
+
         for elt in found:
-            mod_extensions = elt.find('modExtensions')
+            mod_extensions = elt.find("modExtensions")
             if mod_extensions is None:
-                mod_extensions = etree.Element('modExtensions')
+                mod_extensions = etree.Element("modExtensions")
                 elt.append(mod_extensions)
-            for v in self.value:
-                mod_extensions.append(v.copy())
+            for v in self.value.copy():
+                mod_extensions.append(v)
 
         return PatchOperationBasicCounterResult(self, len(found))
 
     @classmethod
     def from_xml(cls, node: etree._Element) -> Self:
-        xpath = get_xpath(node)
+        """Deserialize from an xml node"""
+        xpath = ensure_xpath_elt(node)
         if not isinstance(xpath, ElementXpath):
-            raise MalformedPatchError('AddModExtension only operates on elements')
+            raise MalformedPatchError("AddModExtension only operates on elements")
         return cls(
-                xpath=xpath,
-                value=get_value_elt(node),
-                )
+            xpath=xpath,
+            value=ensure_value(node),
+        )
 
     def to_xml(self, node: etree._Element):
-        node.set('Class', 'PatchOperationAddModExtension')
+        node.set("Class", "PatchOperationAddModExtension")
 
-        xpath = etree.Element('xpath')
+        xpath = etree.Element("xpath")
         xpath.text = self.xpath.xpath
         node.append(xpath)
-
-        value = etree.Element('value')
-        value.extend([v.copy() for v in self.value])
-        node.append(value)
-
-
+        node.append(self.value.copy())

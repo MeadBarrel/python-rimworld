@@ -1,59 +1,74 @@
+""" Provides PatchOperationInsert """
+
 from dataclasses import dataclass
 from typing import Self
+
 from lxml import etree
 
+from rimworld.error import NoNodesFound, PatchError
+from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
+                                  PatchOperationResult)
+from rimworld.patch.result import (PatchOperationBasicCounterResult,
+                                   PatchOperationFailedResult)
+from rimworld.patch.serializers import (Order, SafeElement, ensure_value,
+                                        ensure_xpath_elt, get_order)
+from rimworld.util import unused
 from rimworld.xml import ElementXpath
-
-from .. import *
 
 
 @dataclass(frozen=True)
 class PatchOperationInsert(PatchOperation):
-    xpath: ElementXpath
-    value: list[SafeElement]
-    append: bool
+    """PatchOperationAdd
 
-    def apply(self, context: PatchContext) -> PatchOperationResult:
+    https://rimworldwiki.com/wiki/Modding_Tutorials/PatchOperations#PatchOperationAdd
+    """
+
+    xpath: ElementXpath
+    value: SafeElement
+    order: Order = Order.PREPEND
+
+    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+        unused(patcher)
+
         found = self.xpath.search(context.xml)
-        if self.append:
-            for f in found:
-                for v in reversed(self.value):
-                    f.addnext(v.copy())
-        else:
-            for f in found:
-                for v in self.value:
-                    f.addprevious(v.copy())
+
+        if not found:
+            return PatchOperationFailedResult(self, NoNodesFound(str(self.xpath)))
+
+        for node in found:
+            value = self.value.copy()
+            if value.text:
+                raise PatchError("Value cannot be text")
+            match self.order:
+                case Order.APPEND:
+                    for v in reversed(value):
+                        node.addnext(v)
+                case Order.PREPEND:
+                    for v in value:
+                        node.addprevious(v)
 
         return PatchOperationBasicCounterResult(self, len(found))
 
     @classmethod
     def from_xml(cls, node: etree._Element) -> Self:
-        xpath = get_xpath(node)
-        if not isinstance(xpath, ElementXpath):
-            raise MalformedPatchError('Insert only works on elements')
+        """Deserialize from an xml node"""
+        xpath = ensure_xpath_elt(node)
         return cls(
-                xpath=xpath, 
-                value=get_value_elt(node), 
-                append=get_order_append(node, False),
-                )
+            xpath=xpath,
+            value=ensure_value(node),
+            order=get_order(node, default=Order.PREPEND),
+        )
 
     def to_xml(self, node: etree._Element):
-        node.set('Class', 'PatchOperationInsert')
+        node.set("Class", "PatchOperationInsert")
 
-        xpath = etree.Element('xpath')
+        xpath = etree.Element("xpath")
         xpath.text = self.xpath.xpath
         node.append(xpath)
 
-        value = etree.Element('value')
-        if isinstance(self.value, str):
-            value.text = self.value
-        else:
-            value.extend([v.copy() for v in self.value])
-        node.append(value)
+        node.append(self.value.copy())
 
-        if self.append:
-            append = etree.Element('append')
-            append.text = 'Append'
+        if self.order == Order.APPEND:
+            append = etree.Element("append")
+            append.text = "Append"
             node.append(append)
-
-

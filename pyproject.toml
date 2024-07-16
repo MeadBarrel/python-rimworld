@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rimworld"
-version = "0.1.2"
+version = "0.2.0"
 description = ""
 authors = ["Natalia Borovskikh <lai.tash@gmail.com>"]
 readme = "README.md"
@@ -14,6 +14,8 @@ xmltodict = "^0.13.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
+black = "^24.4.2"
+isort = "^5.13.2"
 
 [tool.pyright]
 pythonVersion = "3.12"
@@ -27,3 +29,14 @@ pythonpath=['.']
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pylint]
+extension-pkg-allow-list = ["lxml"]
+disable = [
+    "R0902",  # too-many-instance-attributes
+    "R0912",  # too-many-branches
+    "W2301",  # unnecessary-ellipses
+    "E0602",  # undefined variables, pyright does this better
+    "W0212",  # need to access _Element and _ElementTree
+]
+init-hook='import sys; sys.path.append("./")'

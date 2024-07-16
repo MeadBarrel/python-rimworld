@@ -1,30 +1,48 @@
-from dataclasses import dataclass
-from enum import Enum, auto
-from typing import Self
-from lxml import etree
-from rimworld.xml import ElementXpath
-from ..proto import PatchContext, PatchOperation
-from ..result import PatchOperationBasicCounterResult
-from .._base import *
-from ._base import *
+"""Provides PatchOperationSafeAdd"""
 
+from dataclasses import dataclass
+from typing import Self
+
+from lxml import etree
+
+from rimworld.error import MalformedPatchError, NoNodesFound
+from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
+                                  PatchOperationResult)
+from rimworld.patch.result import (PatchOperationBasicCounterResult,
+                                   PatchOperationFailedResult)
+from rimworld.patch.serializers import SafeElement, ensure_value, ensure_xpath
+from rimworld.patch.xmlextensions.base import (Compare, get_check_attributes,
+                                               get_compare, get_existing_node,
+                                               get_safety_depth,
+                                               set_check_attributes,
+                                               set_compare, set_safety_depth)
+from rimworld.util import unused
+from rimworld.xml import ElementXpath
 
 
 @dataclass(frozen=True)
 class PatchOperationSafeAdd(PatchOperation):
+    """PatchOperationSafeAdd
+
+    https://github.com/15adhami/XmlExtensions/wiki/XmlExtensions.PatchOperationSafeAdd
+    """
+
     xpath: ElementXpath
-    value: list[SafeElement]
+    value: SafeElement
     safety_depth: int = -1
-    compare: Compare = Compare.Name
+    compare: Compare = Compare.NAME
     check_attributes: bool = False
 
-
-    def apply(self, context: PatchContext) -> PatchOperationBasicCounterResult:
+    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+        unused(patcher)
         found = self.xpath.search(context.xml)
 
+        if not found:
+            return PatchOperationFailedResult(self, NoNodesFound(str(self.xpath)))
+
         for node in found:
-            for value in self.value:
-                self._apply_recursive(node, value.copy(), self.safety_depth)
+            for value in self.value.copy():
+                self._apply_recursive(node, value, self.safety_depth)
 
         return PatchOperationBasicCounterResult(self, len(found))
 
@@ -35,39 +53,37 @@ class PatchOperationSafeAdd(PatchOperation):
             if set(node.attrib.items()) != set(value.attrib.items()):
                 existing = None
 
-
         if existing is None:
             node.append(value)
             return
 
         if depth == 1:
-            return 
+            return
 
         for sub_value in value:
-            self._apply_recursive(existing, sub_value, depth-1)
-
+            self._apply_recursive(existing, sub_value, depth - 1)
 
     @classmethod
     def from_xml(cls, node: etree._Element) -> Self:
-        xpath = get_xpath(node)
+        """Deserialize from an xml node"""
+        xpath = ensure_xpath(node)
         if not isinstance(xpath, ElementXpath):
-            raise MalformedPatchError('SafeAdd only works on elements')
+            raise MalformedPatchError("SafeAdd only works on elements")
 
-        value = get_value_elt(node)
+        value = ensure_value(node)
 
         return cls(
-                xpath=xpath,
-                value=value,
-                safety_depth=get_safety_depth(node),
-                compare=get_compare(node),
-                check_attributes=get_check_attributes(node),
-                )
-
+            xpath=xpath,
+            value=value,
+            safety_depth=get_safety_depth(node),
+            compare=get_compare(node),
+            check_attributes=get_check_attributes(node),
+        )
 
     def to_xml(self, node: etree._Element):
-        node.set('Class', 'PatchOperationAdd')
+        node.set("Class", "PatchOperationAdd")
 
-        xpath = etree.Element('xpath')
+        xpath = etree.Element("xpath")
         xpath.text = self.xpath.xpath
         node.append(xpath)
 
@@ -75,7 +91,4 @@ class PatchOperationSafeAdd(PatchOperation):
         set_check_attributes(node, self.check_attributes)
         set_safety_depth(node, self.safety_depth)
 
-        value = etree.Element('value')
-        value.extend([v.copy() for v in self.value])
-        node.append(value)
-
+        node.append(self.value.copy())

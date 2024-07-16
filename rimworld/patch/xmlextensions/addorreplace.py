@@ -1,26 +1,45 @@
-from dataclasses import dataclass
+""" Provides PatchOperationAddOrReplace """
 
+from dataclasses import dataclass
+from typing import Self
+
+from lxml import etree
+
+from rimworld.error import MalformedPatchError, NoNodesFound
+from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
+                                  PatchOperationResult)
+from rimworld.patch.result import (PatchOperationBasicCounterResult,
+                                   PatchOperationFailedResult)
+from rimworld.patch.serializers import SafeElement, ensure_value, ensure_xpath
+from rimworld.util import unused
 from rimworld.xml import ElementXpath
 
-from ..proto import *
-from .._base import *
-from ..result import PatchOperationBasicCounterResult
-from ._base import *
+from .base import (Compare, get_check_attributes, get_compare,
+                   get_existing_node, set_check_attributes, set_compare)
 
 
 @dataclass(frozen=True)
 class PatchOperationAddOrReplace(PatchOperation):
+    """PatchOperationAddOrReplace
+
+    https://github.com/15adhami/XmlExtensions/wiki/XmlExtensions.PatchOperationAddOrReplace
+    """
+
     xpath: ElementXpath
     compare: Compare
     check_attributes: bool
-    value: list[SafeElement]
+    value: SafeElement
 
-    def apply(self, context: PatchContext) -> PatchOperationBasicCounterResult:
+    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+        unused(patcher)
+
         found = self.xpath.search(context.xml)
 
+        if not found:
+            return PatchOperationFailedResult(self, NoNodesFound(str(self.xpath)))
+
         for node in found:
-            for value in self.value:
-                v = value.copy()
+            for v in self.value.copy():
                 existing = get_existing_node(self.compare, node, v)
                 if existing is None:
                     node.append(v)
@@ -29,33 +48,30 @@ class PatchOperationAddOrReplace(PatchOperation):
 
         return PatchOperationBasicCounterResult(self, len(found))
 
-
     @classmethod
     def from_xml(cls, node: etree._Element) -> Self:
-        xpath = get_xpath(node)
+        """Deserialize from an xml node"""
+        xpath = ensure_xpath(node)
         if not isinstance(xpath, ElementXpath):
-            raise MalformedPatchError('AddOrReplace only works on elements')
+            raise MalformedPatchError("AddOrReplace only works on elements")
 
-        value = get_value_elt(node)
+        value = ensure_value(node)
 
         return cls(
-                xpath=xpath,
-                value=value,
-                compare=get_compare(node),
-                check_attributes=get_check_attributes(node),
-                )
+            xpath=xpath,
+            value=value,
+            compare=get_compare(node),
+            check_attributes=get_check_attributes(node),
+        )
 
     def to_xml(self, node: etree._Element):
-        node.set('Class', 'PatchOperationAdd')
+        node.set("Class", "PatchOperationAdd")
 
-        xpath = etree.Element('xpath')
+        xpath = etree.Element("xpath")
         xpath.text = self.xpath.xpath
         node.append(xpath)
 
         set_compare(node, self.compare)
         set_check_attributes(node, self.check_attributes)
 
-        value = etree.Element('value')
-        value.extend([v.copy() for v in self.value])
-        node.append(value)
-
+        node.append(self.value.copy())

@@ -1,65 +1,74 @@
+""" Provides PatchOperationAdd """
+
 from dataclasses import dataclass
 from typing import Self
+
 from lxml import etree
 
+from rimworld.error import NoNodesFound
+from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
+                                  PatchOperationResult)
+from rimworld.patch.result import (PatchOperationBasicCounterResult,
+                                   PatchOperationFailedResult)
+from rimworld.patch.serializers import (Order, SafeElement, ensure_value,
+                                        ensure_xpath_elt, get_order)
+from rimworld.util import unused
 from rimworld.xml import ElementXpath
 
-from .. import *
 
-
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class PatchOperationAdd(PatchOperation):
-    xpath: ElementXpath
-    value: list[SafeElement]|str
-    append: bool
+    """PatchOperationAdd
 
-    def apply(self, context: PatchContext) -> PatchOperationResult:
+    https://rimworldwiki.com/wiki/Modding_Tutorials/PatchOperations#PatchOperationAdd
+    """
+
+    xpath: ElementXpath
+    value: SafeElement
+    order: Order = Order.APPEND
+
+    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+        unused(patcher)
+
         found = self.xpath.search(context.xml)
 
+        if len(found) == 0:
+            return PatchOperationFailedResult(self, NoNodesFound(str(self.xpath)))
+
         for elt in found:
-            if self.append:
-                if isinstance(self.value, str):
-                    elt.text = (elt.text or '') + self.value
-                else:
-                    elt.extend([c.copy() for c in self.value])
-            else:
-                if isinstance(self.value, str):
-                    elt.text = self.value + (elt.text or '')
-                else:
-                    for v in self.value:
-                        elt.insert(0, v.copy())
+            value = self.value.copy()
+            match self.order:
+                case Order.APPEND:
+                    if value.text:
+                        elt.text = (elt.text or "") + value.text
+                    elt.extend(value)
+                case Order.PREPEND:
+                    if value.text:
+                        elt.text = value.text + (elt.text or "")
+                    for v in value:
+                        elt.insert(0, v)
 
         return PatchOperationBasicCounterResult(self, len(found))
 
-
     @classmethod
     def from_xml(cls, node: etree._Element) -> Self:
-        xpath = get_xpath(node)
-        if not isinstance(xpath, ElementXpath):
-            raise MalformedPatchError('PatchOperationAdd only operates on elements')
+        """deserialize from xml"""
         return cls(
-                xpath=xpath,
-                value=get_value(node),
-                append=get_order_append(node, True),
-                )
+            xpath=ensure_xpath_elt(node),
+            value=ensure_value(node),
+            order=get_order(node, default=Order.APPEND),
+        )
 
     def to_xml(self, node: etree._Element):
-        node.set('Class', 'PatchOperationAdd')
+        node.set("Class", "PatchOperationAdd")
 
-        xpath = etree.Element('xpath')
+        xpath = etree.Element("xpath")
         xpath.text = self.xpath.xpath
         node.append(xpath)
 
-        value = etree.Element('value')
-        if isinstance(self.value, str):
-            value.text = self.value
-        else:
-            value.extend([v.copy() for v in self.value])
-        node.append(value)
+        node.append(self.value.copy())
 
-        if not self.append:
-            append = etree.Element('order')
-            append.text = 'Prepend'
+        if self.order != Order.APPEND:
+            append = etree.Element("order")
+            append.text = "Prepend"
             node.append(append)
-
-

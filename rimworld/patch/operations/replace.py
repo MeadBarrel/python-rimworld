@@ -1,67 +1,87 @@
+""" Provides PatchOperationReplace """
+
 from dataclasses import dataclass
 from typing import Self, cast
+
 from lxml import etree
 
+from rimworld.error import MalformedPatchError, NoNodesFound, PatchError
+from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
+                                  PatchOperationResult)
+from rimworld.patch.result import (PatchOperationBasicCounterResult,
+                                   PatchOperationFailedResult)
+from rimworld.patch.serializers import SafeElement, ensure_value, ensure_xpath
+from rimworld.util import unused
 from rimworld.xml import ElementXpath, TextXpath
-
-from .. import *
 
 
 @dataclass(frozen=True, kw_only=True)
 class PatchOperationReplace(PatchOperation):
-    xpath: ElementXpath|TextXpath
-    value: list[SafeElement]|str
+    """PatchOperationReplace
 
-    def apply(self, context: PatchContext) -> PatchOperationResult:
+    https://rimworldwiki.com/wiki/Modding_Tutorials/PatchOperations#PatchOperationReplace
+    """
+
+    xpath: ElementXpath | TextXpath
+    value: SafeElement
+
+    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+        unused(patcher)
         match self.xpath:
             case ElementXpath():
                 if isinstance(self.value, str):
-                    raise PatchError('Elements can only be replaced with other elements')
+                    raise PatchError(
+                        "Elements can only be replaced with other elements"
+                    )
                 found = self.xpath.search(context.xml)
+                if not found:
+                    return PatchOperationFailedResult(
+                        self, NoNodesFound(str(self.xpath))
+                    )
                 for f in found:
                     parent = f.getparent()
                     if parent is None:
-                        raise PatchError(f'Parent not found for {self.xpath}')
-                    v1, *v_ = self.value
-                    v1_ = v1.copy()
-                    parent.replace(f, v1_)
+                        raise PatchError(f"Parent not found for {self.xpath}")
+                    v1, *v_ = self.value.copy()
+                    parent.replace(f, v1)
 
                     for v in reversed(v_):
-                        v1_.addnext(v.copy())
+                        v1.addnext(v)
+
             case TextXpath():
                 found = self.xpath.search(context.xml)
+                if not found:
+                    return PatchOperationFailedResult(
+                        self, NoNodesFound(str(self.xpath))
+                    )
                 for f in found:
-                    if isinstance(self.value, str):
-                        f.node.text = self.value
+                    value = self.value.copy()
+                    if value.text is not None:
+                        f.node.text = value.text
                     else:
                         f.node.text = None
-                        for v in self.value:
-                            f.node.append(v.copy())
-                    
+                        for v in value:
+                            f.node.append(v)
+
         return PatchOperationBasicCounterResult(self, len(found))
 
     @classmethod
     def from_xml(cls, node: etree._Element) -> Self:
-        xpath = get_xpath(node)
+        """Deserialize from an xml node"""
+        xpath = ensure_xpath(node)
         if type(xpath) not in (ElementXpath, TextXpath):
-            raise MalformedPatchError('Replace only work on text or elements')
+            raise MalformedPatchError("Replace only work on text or elements")
 
         return cls(
-                xpath=cast(ElementXpath|TextXpath, xpath),
-                value=get_value(node),
-                )
+            xpath=cast(ElementXpath | TextXpath, xpath),
+            value=ensure_value(node),
+        )
 
     def to_xml(self, node: etree._Element):
-        node.set('Class', 'PatchOperationReplace')
+        node.set("Class", "PatchOperationReplace")
 
-        xpath = etree.Element('xpath')
+        xpath = etree.Element("xpath")
         xpath.text = self.xpath.xpath
         node.append(xpath)
 
-        value = etree.Element('value')
-        if isinstance(self.value, str):
-            value.text = self.value
-        else:
-            value.extend([v.copy() for v in self.value])
-        node.append(value)
-
+        node.append(self.value.copy())

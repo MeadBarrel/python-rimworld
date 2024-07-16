@@ -1,5 +1,25 @@
+""" Contains some common result classes for patch operations """
+
+# pylint: disable=missing-function-docstring
+# pylint: disable=missing-class-docstring
+
 from dataclasses import dataclass
-from .proto import PatchOperationResult, PatchOperation
+
+from .proto import PatchOperation, PatchOperationResult
+
+
+@dataclass(frozen=True)
+class PatchOperationFailedResult(PatchOperationResult):
+    operation: PatchOperation
+    exception: Exception
+
+    @property
+    def is_successful(self) -> bool:
+        return False
+
+    @property
+    def nodes_affected(self) -> int:
+        return 0
 
 
 @dataclass(frozen=True)
@@ -12,7 +32,7 @@ class PatchOperationBasicCounterResult(PatchOperationResult):
         return bool(self.nodes_affected)
 
     @property
-    def exception(self) -> Exception | None:
+    def exception(self) -> None:
         return None
 
 
@@ -20,7 +40,7 @@ class PatchOperationBasicCounterResult(PatchOperationResult):
 class PatchOperationBasicConditionalResult(PatchOperationResult):
     operation: PatchOperation
     matched: bool
-    child_result: PatchOperationResult|None
+    child_result: PatchOperationResult | None
 
     @property
     def is_successful(self) -> bool:
@@ -39,7 +59,6 @@ class PatchOperationBasicConditionalResult(PatchOperationResult):
         if self.child_result is None:
             return None
         return self.child_result.exception
-
 
 
 @dataclass(frozen=True)
@@ -103,7 +122,7 @@ class PatchOperationInverted(PatchOperationResult):
     @property
     def operation(self) -> PatchOperation:
         return self.child.operation
-    
+
 
 @dataclass(frozen=True)
 class PatchOperationDenied(PatchOperationResult):
@@ -137,4 +156,3 @@ class PatchOperationSkipped(PatchOperationResult):
     @property
     def nodes_affected(self) -> int:
         return 0
-

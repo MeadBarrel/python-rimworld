@@ -16,5 +16,6 @@
     <li>Ludeon.RimWorld.Biotech</li>
     <li>Ludeon.RimWorld.Anomaly</li>
   </forceLoadBefore>
+  <description>description</description>
 
 </ModMetaData>
