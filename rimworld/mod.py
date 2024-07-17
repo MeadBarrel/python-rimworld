@@ -606,6 +606,7 @@ class LoadFolders:
                 path = folder.path.as_posix()
                 if path == ".":
                     path = "/"
+                li.text = path
                 version_element.append(li)
         return result
 
