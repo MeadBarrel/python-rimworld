@@ -19,10 +19,10 @@ __all__ = [
     "Mod",
     "ModDependency",
     "ModAbout",
+    "ModsConfig",
     "LoadFolders",
     "NotAModFolderError",
     "is_mod_folder",
-    "read_modlist",
 ]
 
 
@@ -719,30 +719,3 @@ class ModsConfig:
 def is_mod_folder(path: Path) -> bool:
     """Check if a folder is a mod folder"""
     return path.joinpath("About", "About.xml").exists()
-
-
-def read_modlist(filepath: Path) -> tuple[list[str], list[str]]:
-    """
-    Read and parse the modlist XML file.
-
-
-    Args:
-        filepath (Path): The path to the modlist XML file.
-
-    Returns:
-        (active mods, known expansions)
-
-    Raises:
-        AssertionError: If the parsed XML does not contain expected elements.
-    """
-    xml = load_xml(filepath)
-
-    mods = xml.xpath("/ModsConfigData/activeMods/*/text()")
-    assert isinstance(mods, list)
-    assert all(isinstance(x, str) for x in mods)
-
-    known_expansions = xml.xpath("/ModsConfigData/knownExpansions/*/text()")
-    assert isinstance(known_expansions, list)
-    assert all(isinstance(x, str) for x in known_expansions)
-
-    return cast(list[str], mods), cast(list[str], known_expansions)
