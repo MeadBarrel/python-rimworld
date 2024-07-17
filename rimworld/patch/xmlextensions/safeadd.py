@@ -6,8 +6,7 @@ from typing import Self
 from lxml import etree
 
 from rimworld.error import MalformedPatchError, NoNodesFound
-from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
-                                  PatchOperationResult)
+from rimworld.patch.proto import PatchOperation, PatchOperationResult
 from rimworld.patch.result import (PatchOperationBasicCounterResult,
                                    PatchOperationFailedResult)
 from rimworld.patch.serializers import SafeElement, ensure_value, ensure_xpath
@@ -16,7 +15,6 @@ from rimworld.patch.xmlextensions.base import (Compare, get_check_attributes,
                                                get_safety_depth,
                                                set_check_attributes,
                                                set_compare, set_safety_depth)
-from rimworld.util import unused
 from rimworld.xml import ElementXpath
 
 
@@ -33,9 +31,8 @@ class PatchOperationSafeAdd(PatchOperation):
     compare: Compare = Compare.NAME
     check_attributes: bool = False
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
-        unused(patcher)
-        found = self.xpath.search(context.xml)
+    def __call__(self, xml: etree._ElementTree, *_) -> PatchOperationResult:
+        found = self.xpath.search(xml)
 
         if not found:
             return PatchOperationFailedResult(self, NoNodesFound(str(self.xpath)))

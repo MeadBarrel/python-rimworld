@@ -28,6 +28,7 @@ __all__ = [
     "serialize_strings_as_list",
     "deserialize_from_list",
     "deserialize_strings_from_list",
+    "xml_to_string",
 ]
 
 
@@ -243,7 +244,7 @@ def make_element(
         result.set(k, v)
     for child in children:
         result.append(child)
-    if parent:
+    if parent is not None:
         parent.append(result)
     return result
 
@@ -271,24 +272,24 @@ def serialize_as_list(parent: etree._Element, values: Sequence[XMLSerializable])
     """Serialize values into a list
 
     Example:
-
         >>> @dataclass
-        >>> class Dummy(XMLSerializable):
-
-        >>>    def to_xml(self, parent: etree._Element):
-        >>>         make_element('dummy', self.text, parent=parent)
-
-        >>>     @classmethod
-        >>>     def from_xml(cls: Type[Self], node: etree._Element) -> Self:
-        >>>         return ensure_element_text(node.find('dummy'))
-
+        ... class Dummy:
+        ...     text: str
+        ...
+        ...     def to_xml(self, parent):
+        ...         make_element('dummy', self.text, parent=parent)
+        ...
         >>> dummies = [Dummy('i am a dummy'), Dummy('he is a dummy')]
         >>> node = make_element('list_of_dummies')
         >>> serialize_as_list(node, dummies)
-        >>> etree.tostring(node, pretty_print=True).decode('utf-8')
+        >>> print(xml_to_string(node))
         <list_of_dummies>
-            <li>i am a dummy</li>
-            <li>he is a dummy</li>
+          <li>
+            <dummy>i am a dummy</dummy>
+          </li>
+          <li>
+            <dummy>he is a dummy</dummy>
+          </li>
         </list_of_dummies>
 
     """
@@ -308,29 +309,19 @@ def deserialize_from_list[
 ](parent: etree._Element, cls_: Type[T]) -> list[T]:
     """Deserialize values from a list
 
-
     Example:
-
         >>> @dataclass
-        >>> class Dummy(XMLSerializable):
-        >>>    text: str
-
-        >>>    def to_xml(self, parent: etree._Element):
-        >>>         make_element('dummy', self.text, parent=parent)
-
-        >>>     @classmethod
-        >>>     def from_xml(cls: Type[Self], node: etree._Element) -> Self:
-        >>>         return ensure_element_text(node.find('dummy'))
-
-        >>> dummies = [Dummy('i am a dummy'), Dummy('he is a dummy')]
-        >>> node = make_element('list_of_dummies')
-        >>> serialize_as_list(node, dummies)
-        >>> print(etree.tostring(node, pretty_print=True).decode('utf-8'))
-        >>> xml = "<list_of_dummies><li>i am a dummy</li><li>he is a dummy</li></list_of_dummies>"
-        >>> node = etree.fromstring(xml)
-        >>> deserialize_fom_list(node, Dummy)
+        ... class Dummy:
+        ...     text: str
+        ...
+        ...     @classmethod
+        ...     def from_xml(cls, node):
+        ...         return cls(node.text)
+        ...
+        >>> raw = '<node><li>i am a dummy</li><li>he is a dummy</li></node>'
+        >>> node = etree.fromstring(raw)
+        >>> deserialize_from_list(node, Dummy)
         [Dummy(text='i am a dummy'), Dummy(text='he is a dummy')]
-
     """
 
     return [cls_.from_xml(li) for li in parent.findall("li")]
@@ -344,3 +335,8 @@ def deserialize_strings_from_list(parent: etree._Element) -> list[str]:
         if text:
             result.append(text)
     return result
+
+
+def xml_to_string(node: etree._ElementTree | etree._Element):
+    """Convert xml to pretty-printed utf string"""
+    return etree.tostring(node, pretty_print=True, encoding="utf-8").decode("utf-8")

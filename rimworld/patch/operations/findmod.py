@@ -21,22 +21,24 @@ class PatchOperationFindMod(PatchOperation):
     match: PatchOperation | None
     nomatch: PatchOperation | None
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+    def __call__(
+        self, xml: etree._ElementTree, context: PatchContext
+    ) -> PatchOperationResult:
         matches = all(m in context.active_package_names for m in self.mods)
         if matches:
             return PatchOperationBasicConditionalResult(
                 self,
                 True,
-                patcher.apply_operation(self.match, context) if self.match else None,
+                self.match(xml, context) if self.match else None,
             )
         return PatchOperationBasicConditionalResult(
             self,
             False,
-            patcher.apply_operation(self.nomatch, context) if self.nomatch else None,
+            self.nomatch(xml, context) if self.nomatch else None,
         )
 
     @classmethod
-    def from_xml(cls, patcher: Patcher, node: etree._Element) -> Self:
+    def from_xml(cls, get_operation: Patcher, node: etree._Element) -> Self:
         """Deserialize from xml"""
         mods_elt = node.find("mods")
         if mods_elt is None:
@@ -47,12 +49,10 @@ class PatchOperationFindMod(PatchOperation):
                 continue
             mods.append(child.text or "")
         match_elt = node.find("match")
-        match = patcher.select_operation(match_elt) if match_elt is not None else None
+        match = get_operation(match_elt) if match_elt is not None else None
 
         nomatch_elt = node.find("nomatch")
-        nomatch = (
-            patcher.select_operation(nomatch_elt) if nomatch_elt is not None else None
-        )
+        nomatch = get_operation(nomatch_elt) if nomatch_elt is not None else None
         return cls(
             mods=mods,
             match=match,

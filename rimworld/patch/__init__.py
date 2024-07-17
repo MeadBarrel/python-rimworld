@@ -55,7 +55,7 @@ __all__ = [
     "PatchOperationSkipped",
     "PatchOperationSuppressed",
     "PatchOperationWrapper",
-    "WorldPatcher",
+    "get_operation",
     "Success",
 ]
 
@@ -101,7 +101,9 @@ class PatchOperationWrapper(PatchOperation):
     may_require_any_of: list[str] | None = None
     success: Success = Success.NORMAL
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+    def __call__(
+        self, xml: etree._ElementTree, context: PatchContext
+    ) -> PatchOperationResult:
         if self.may_require:
             if not all(pid in context.active_package_ids for pid in self.may_require):
                 return PatchOperationDenied(self.operation)
@@ -110,7 +112,7 @@ class PatchOperationWrapper(PatchOperation):
                 pid in context.active_package_ids for pid in self.may_require_any_of
             ):
                 return PatchOperationDenied(self.operation)
-        op_result = patcher.apply_operation(self.operation, context)
+        op_result = self.operation(xml, context)
         match self.success:
             case Success.NORMAL:
                 return op_result
@@ -145,9 +147,7 @@ class PatchOperationUnknown(PatchOperation):
 
     node: etree._Element
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> "PatchOperationResult":
-        unused(patcher)
-        unused(context)
+    def __call__(self, *_) -> "PatchOperationResult":
         return PatchOperationSkipped(self)
 
     def to_xml(self, node: etree._Element):
@@ -158,85 +158,63 @@ class PatchOperationUnknown(PatchOperation):
             node.append(c)
 
 
-class WorldPatcher(Patcher):
-    def patch(
-        self,
-        patch: etree._ElementTree,
-        context: PatchContext,
-    ) -> list[PatchOperationResult]:
-        operations = self.collect_operations(patch.getroot(), "Operation")
-        return [self.apply_operation(operation, context) for operation in operations]
+def get_operation(node: etree._Element) -> PatchOperation:
+    """Basic Patcher"""
+    base_op = _select_operation_concrete(node)
 
-    def apply_operation(
-        self,
-        operation: PatchOperation,
-        context: PatchContext,
-    ) -> PatchOperationResult:
-        logging.getLogger(__name__).debug("Applying patch operation %s", operation)
-        return operation.apply(self, context)
-
-    def collect_operations(
-        self, node: etree._Element, tag: str
-    ) -> list[PatchOperation]:
-        return [self.select_operation(sn) for sn in node if sn.tag == tag]
-
-    def select_operation(self, node: etree._Element) -> PatchOperation:
-        base_op = self._select_operation_concrete(node)
-
-        if isinstance(base_op, PatchOperationUnknown):
-            return base_op
-
-        may_require = None
-        may_require_any_of = None
-
-        if mr := node.get("MayRequire"):
-            may_require = [x.strip() for x in mr.split(",")]
-        if mr := node.get("MayRequireAnyOf"):
-            may_require_any_of = [x.strip() for x in mr.split(",")]
-        success = Success.from_xml(node)
-
-        if may_require or may_require_any_of or success != Success.NORMAL:
-            return PatchOperationWrapper(
-                base_op, may_require, may_require_any_of, success
-            )
-
+    if isinstance(base_op, PatchOperationUnknown):
         return base_op
 
-    # pylint: disable-next=too-many-return-statements
-    def _select_operation_concrete(self, node: etree._Element) -> PatchOperation:
-        match node.get("Class"):
-            case "PatchOperationAdd":
-                return PatchOperationAdd.from_xml(node)
-            case "PatchOperationAddModExtension":
-                return PatchOperationAddModExtension.from_xml(node)
-            case "PatchOperationAttributeAdd":
-                return PatchOperationAttributeAdd.from_xml(node)
-            case "PatchOperationAttributeRemove":
-                return PatchOperationAttributeRemove.from_xml(node)
-            case "PatchOperationAttributeSet":
-                return PatchOperationAttributeSet.from_xml(node)
-            case "PatchOperationConditional":
-                return PatchOperationConditional.from_xml(self, node)
-            case "PatchOperationFindMod":
-                return PatchOperationFindMod.from_xml(self, node)
-            case "PatchOperationInsert":
-                return PatchOperationInsert.from_xml(node)
-            case "PatchOperationTest":
-                return PatchOperationTest.from_xml(node)
-            case "PatchOperationRemove":
-                return PatchOperationRemove.from_xml(node)
-            case "PatchOperationReplace":
-                return PatchOperationReplace.from_xml(node)
-            case "PatchOperationSequence":
-                return PatchOperationSequence.from_xml(self, node)
-            case "PatchOperationSetName":
-                return PatchOperationSetName.from_xml(node)
+    may_require = None
+    may_require_any_of = None
 
-            # XmlExtensions
-            case "XmlExtensions.PatchOperationSafeAdd":
-                return PatchOperationSafeAdd.from_xml(node)
-            case "XmlExtensions.PatchOperationAddOrReplace":
-                return PatchOperationAddOrReplace.from_xml(node)
+    if mr := node.get("MayRequire"):
+        may_require = [x.strip() for x in mr.split(",")]
+    if mr := node.get("MayRequireAnyOf"):
+        may_require_any_of = [x.strip() for x in mr.split(",")]
+    success = Success.from_xml(node)
 
-            case _:
-                return PatchOperationUnknown(node)
+    if may_require or may_require_any_of or success != Success.NORMAL:
+        return PatchOperationWrapper(base_op, may_require, may_require_any_of, success)
+
+    return base_op
+
+
+# pylint: disable-next=too-many-return-statements
+def _select_operation_concrete(node: etree._Element) -> PatchOperation:
+    match node.get("Class"):
+        case "PatchOperationAdd":
+            return PatchOperationAdd.from_xml(node)
+        case "PatchOperationAddModExtension":
+            return PatchOperationAddModExtension.from_xml(node)
+        case "PatchOperationAttributeAdd":
+            return PatchOperationAttributeAdd.from_xml(node)
+        case "PatchOperationAttributeRemove":
+            return PatchOperationAttributeRemove.from_xml(node)
+        case "PatchOperationAttributeSet":
+            return PatchOperationAttributeSet.from_xml(node)
+        case "PatchOperationConditional":
+            return PatchOperationConditional.from_xml(get_operation, node)
+        case "PatchOperationFindMod":
+            return PatchOperationFindMod.from_xml(get_operation, node)
+        case "PatchOperationInsert":
+            return PatchOperationInsert.from_xml(node)
+        case "PatchOperationTest":
+            return PatchOperationTest.from_xml(node)
+        case "PatchOperationRemove":
+            return PatchOperationRemove.from_xml(node)
+        case "PatchOperationReplace":
+            return PatchOperationReplace.from_xml(node)
+        case "PatchOperationSequence":
+            return PatchOperationSequence.from_xml(get_operation, node)
+        case "PatchOperationSetName":
+            return PatchOperationSetName.from_xml(node)
+
+        # XmlExtensions
+        case "XmlExtensions.PatchOperationSafeAdd":
+            return PatchOperationSafeAdd.from_xml(node)
+        case "XmlExtensions.PatchOperationAddOrReplace":
+            return PatchOperationAddOrReplace.from_xml(node)
+
+        case _:
+            return PatchOperationUnknown(node)

@@ -5,10 +5,8 @@ from typing import Self
 
 from lxml import etree
 
-from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
-                                  PatchOperationResult)
+from rimworld.patch.proto import PatchOperation, PatchOperationResult
 from rimworld.patch.serializers import ensure_xpath
-from rimworld.util import unused
 from rimworld.xml import Xpath
 
 
@@ -43,9 +41,8 @@ class PatchOperationTest(PatchOperation):
 
     xpath: Xpath
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
-        unused(patcher)
-        found = self.xpath.search(context.xml)
+    def __call__(self, xml: etree._ElementTree, *_) -> PatchOperationResult:
+        found = self.xpath.search(xml)
         return PatchOperationTestResult(self, bool(found))
 
     @classmethod

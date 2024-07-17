@@ -6,12 +6,10 @@ from typing import Self, cast
 from lxml import etree
 
 from rimworld.error import MalformedPatchError, NoNodesFound, PatchError
-from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
-                                  PatchOperationResult)
+from rimworld.patch.proto import PatchOperation, PatchOperationResult
 from rimworld.patch.result import (PatchOperationBasicCounterResult,
                                    PatchOperationFailedResult)
 from rimworld.patch.serializers import SafeElement, ensure_value, ensure_xpath
-from rimworld.util import unused
 from rimworld.xml import ElementXpath, TextXpath
 
 
@@ -25,15 +23,14 @@ class PatchOperationReplace(PatchOperation):
     xpath: ElementXpath | TextXpath
     value: SafeElement
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
-        unused(patcher)
+    def __call__(self, xml: etree._ElementTree, *_) -> PatchOperationResult:
         match self.xpath:
             case ElementXpath():
                 if isinstance(self.value, str):
                     raise PatchError(
                         "Elements can only be replaced with other elements"
                     )
-                found = self.xpath.search(context.xml)
+                found = self.xpath.search(xml)
                 if not found:
                     return PatchOperationFailedResult(
                         self, NoNodesFound(str(self.xpath))
@@ -49,7 +46,7 @@ class PatchOperationReplace(PatchOperation):
                         v1.addnext(v)
 
             case TextXpath():
-                found = self.xpath.search(context.xml)
+                found = self.xpath.search(xml)
                 if not found:
                     return PatchOperationFailedResult(
                         self, NoNodesFound(str(self.xpath))

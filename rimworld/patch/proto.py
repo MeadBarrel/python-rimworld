@@ -1,7 +1,8 @@
 """ Base definitions for patching """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Protocol, TypeAlias, runtime_checkable
 
 from lxml import etree
 
@@ -19,8 +20,8 @@ class PatchOperationResult(Protocol):  # pylint: disable=R0903
 class PatchOperation(Protocol):
     """Base class for all patch operations"""
 
-    def apply(
-        self, patcher: "Patcher", context: "PatchContext"
+    def __call__(
+        self, xml: etree._ElementTree, context: "PatchContext"
     ) -> PatchOperationResult:
         """Apply the operation"""
         ...
@@ -30,45 +31,38 @@ class PatchOperation(Protocol):
         ...
 
 
+# pylint: disable-next=too-few-public-methods
 class Patcher(Protocol):
-    """Patching controller"""
+    """Protocol for an operation deserializer
 
-    def patch(
-        self,
-        patch: etree._ElementTree,
-        context: "PatchContext",
-    ) -> list[PatchOperationResult]:
-        """Apply operations defined in `patch` on context.xml"""
-        ...
+    Use it to select an operation from an xml node.
 
-    def collect_operations(
-        self,
-        node: etree._Element,
-        tag: str,
-    ) -> list[PatchOperation]:
-        """Collect operations from a node"""
-        ...
+    Example:
+        context = PatchContext(
+                active_package_ids=[
+                    "ludeon.rimworld", "ludeon.rimworld.royalty"
+                    ],
+                )
 
-    def select_operation(
-        self,
-        node: etree._Element,
-    ) -> PatchOperation:
-        """Select an operation defined in a node"""
-        ...
+        def select_operation(node: etree._Element) -> PatchOperation:
+            # create an operation
+            ...
 
-    def apply_operation(
-        self,
-        operation: PatchOperation,
-        context: "PatchContext",
-    ) -> PatchOperationResult:
-        """Appy an operation"""
-        ...
+
+        patch_xml = etree.fromstring("<Operation Class="...">...</Operation>")
+        result = select_operation(patch_xml)(xml, context)
+    """
+
+    def __call__(self, node: etree._Element) -> PatchOperation: ...
 
 
 @dataclass(frozen=True)
 class PatchContext:
-    """Provides context for patch operations"""
+    """Provides context for patch operations
 
-    xml: etree._ElementTree
+    This is required for operations like PatchOperationFindMod, as well as
+    filtering operations by MayRequire and MayRequireAnyOf attributes
+    """
+
     active_package_ids: set[str]
     active_package_names: set[str]

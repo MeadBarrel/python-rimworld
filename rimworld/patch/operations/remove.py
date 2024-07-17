@@ -6,12 +6,10 @@ from typing import Self, cast
 from lxml import etree
 
 from rimworld.error import MalformedPatchError, NoNodesFound, PatchError
-from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
-                                  PatchOperationResult)
+from rimworld.patch.proto import PatchOperation, PatchOperationResult
 from rimworld.patch.result import (PatchOperationBasicCounterResult,
                                    PatchOperationFailedResult)
 from rimworld.patch.serializers import ensure_xpath
-from rimworld.util import unused
 from rimworld.xml import ElementXpath, TextXpath
 
 
@@ -24,12 +22,11 @@ class PatchOperationRemove(PatchOperation):
 
     xpath: ElementXpath | TextXpath
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
-        unused(patcher)
+    def __call__(self, xml: etree._ElementTree, *_) -> PatchOperationResult:
 
         match self.xpath:
             case ElementXpath():
-                found = self.xpath.search(context.xml)
+                found = self.xpath.search(xml)
                 if not found:
                     return PatchOperationFailedResult(
                         self, NoNodesFound(str(self.xpath))
@@ -40,7 +37,7 @@ class PatchOperationRemove(PatchOperation):
                         raise PatchError(f"Parent not found for {self.xpath}")
                     parent.remove(elt)
             case TextXpath():
-                found = self.xpath.search(context.xml)
+                found = self.xpath.search(xml)
                 if not found:
                     return PatchOperationFailedResult(
                         self, NoNodesFound(str(self.xpath))

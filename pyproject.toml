@@ -22,9 +22,10 @@ pythonVersion = "3.12"
 reportIncompatibleMethodOverride = true
 
 [tool.pytest.ini_options]
-testpaths=['tests']
+testpaths=['tests', 'rimworld']
 pythonpath=['.']
-
+addopts = "--doctest-modules"
+doctest_optionflags = ['NORMALIZE_WHITESPACE', 'IGNORE_EXCEPTION_DETAIL']
 
 [build-system]
 requires = ["poetry-core"]

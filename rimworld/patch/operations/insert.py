@@ -6,13 +6,11 @@ from typing import Self
 from lxml import etree
 
 from rimworld.error import NoNodesFound, PatchError
-from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
-                                  PatchOperationResult)
+from rimworld.patch.proto import PatchOperation, PatchOperationResult
 from rimworld.patch.result import (PatchOperationBasicCounterResult,
                                    PatchOperationFailedResult)
 from rimworld.patch.serializers import (Order, SafeElement, ensure_value,
                                         ensure_xpath_elt, get_order)
-from rimworld.util import unused
 from rimworld.xml import ElementXpath
 
 
@@ -27,10 +25,9 @@ class PatchOperationInsert(PatchOperation):
     value: SafeElement
     order: Order = Order.PREPEND
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
-        unused(patcher)
+    def __call__(self, xml: etree._ElementTree, *_) -> PatchOperationResult:
 
-        found = self.xpath.search(context.xml)
+        found = self.xpath.search(xml)
 
         if not found:
             return PatchOperationFailedResult(self, NoNodesFound(str(self.xpath)))

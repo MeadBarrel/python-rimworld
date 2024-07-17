@@ -4,7 +4,7 @@ import pytest
 from lxml import etree
 
 from rimworld.mod import Mod
-from rimworld.patch import PatchContext, WorldPatcher
+from rimworld.patch import PatchContext, get_operation
 from rimworld.util import unused
 from rimworld.xml import find_xmls, load_xml
 
@@ -36,17 +36,19 @@ def make_parameters():  # pylint: disable=too-many-locals
                 mods_used = [mod for mod in mods if mod.package_id in mods_used_pids]
             else:
                 mods_used = []
-            tree = etree.ElementTree(defs)
+            xml = etree.ElementTree(defs)
 
             context = PatchContext(
-                xml=tree,
                 active_package_ids=set(mod.package_id for mod in mods_used),
-                active_package_names=set(mod.about.name for mod in mods_used),
+                active_package_names=set(
+                    mod.about.name for mod in mods_used if mod.about.name
+                ),
             )
             result.append(
                 (
                     str(filename),
                     name,
+                    xml,
                     context,
                     patch,
                     expected,
@@ -58,10 +60,13 @@ def make_parameters():  # pylint: disable=too-many-locals
 parameters = make_parameters()
 
 
-@pytest.mark.parametrize(("file", "case", "context", "patch", "expected"), parameters)
+@pytest.mark.parametrize(
+    ("file", "case", "xml", "context", "patch", "expected"), parameters
+)
 def test_patches_dd(
     file: str,
     case: str | None,
+    xml: etree._ElementTree,
     context: PatchContext,
     patch: etree._Element,
     expected: etree._Element,
@@ -69,11 +74,11 @@ def test_patches_dd(
     """Test patch operations"""
     unused(file)
     unused(case)
-    patcher = WorldPatcher()
-    patcher.patch(etree.ElementTree(patch), context)
+    for node in patch.findall("Operation"):
+        get_operation(node)(xml, context)
 
     expected.tag = "Defs"
-    assert_xml_eq(context.xml.getroot(), expected)
+    assert_xml_eq(xml.getroot(), expected)
 
 
 def assert_xml_eq(e1: etree._Element, e2: etree._Element, path=""):

@@ -44,22 +44,24 @@ class PatchOperationSequence(PatchOperation):
 
     operations: list[PatchOperation]
 
-    def apply(self, patcher: Patcher, context: PatchContext) -> PatchOperationResult:
+    def __call__(
+        self, xml: etree._ElementTree, context: PatchContext
+    ) -> PatchOperationResult:
         results = []
         for operation in self.operations:
-            operation_result = patcher.apply_operation(operation, context)
+            operation_result = operation(xml, context)
             results.append(operation_result)
             if not operation_result.is_successful:
                 break
         return PatchOperationSequenceResult(self, results)
 
     @classmethod
-    def from_xml(cls, patcher: Patcher, node: etree._Element) -> Self:
+    def from_xml(cls, get_operation: Patcher, node: etree._Element) -> Self:
         """Deserialize from an xml node"""
-        operations = patcher.collect_operations(
-            ensure_element(node, "operations"),
-            tag="li",
-        )
+        operations = []
+        for li in ensure_element(node, "operations").findall("li"):
+            operations.append(get_operation(li))
+
         return cls(
             operations=operations,
         )
