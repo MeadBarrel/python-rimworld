@@ -9,7 +9,7 @@ from rimworld.patch.proto import (PatchContext, Patcher, PatchOperation,
                                   PatchOperationResult)
 from rimworld.patch.result import PatchOperationBasicConditionalResult
 from rimworld.patch.serializers import ensure_xpath
-from rimworld.xml import Xpath
+from rimworld.xml import Xpath, make_element
 
 
 @dataclass(frozen=True)
@@ -52,6 +52,8 @@ class PatchOperationConditional(PatchOperation):
 
     def to_xml(self, node: etree._Element):
         node.set("Class", "PatchOperationConditional")
+
+        make_element("xpath", str(self.xpath), parent=node)
 
         if self.match is not None:
             match = etree.Element("match")
