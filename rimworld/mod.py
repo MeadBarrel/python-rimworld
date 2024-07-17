@@ -670,6 +670,52 @@ class Mod:
             yield RelativeModFolder(str(version))
 
 
+@dataclass(frozen=True)
+class ModsConfig:
+    """Model for ModsConfig.xml"""
+
+    version: GameVersion
+    active_mods: list[str]
+    known_expansions: list[str]
+
+    @classmethod
+    def load(cls, path: Path) -> Self:
+        """Load from an .xml file"""
+        xml = load_xml(path)
+        return cls.from_xml(xml)
+
+    @classmethod
+    def from_xml(cls, xml: etree._ElementTree) -> Self:
+        """Load from xml"""
+
+        active_mods_elt = xml.find("activeMods")
+        if active_mods_elt is None:
+            raise RuntimeError("Element must be present: activeMods")
+
+        known_expansions_elt = xml.find("knownExpansions")
+        if known_expansions_elt is None:
+            raise RuntimeError("Element must be present: knownExpansions")
+
+        return cls(
+            version=GameVersion.new(ensure_element_text(xml.find("version"))),
+            active_mods=deserialize_strings_from_list(active_mods_elt),
+            known_expansions=deserialize_strings_from_list(known_expansions_elt),
+        )
+
+    def to_xml(self) -> etree._ElementTree:
+        """Serialize as xml"""
+        root = etree.Element("ModsConfigData")
+        result = etree.ElementTree(root)
+        root.append(make_element("version", str(self.version)))
+        serialize_strings_as_list(
+            make_element("activeMods", parent=root), self.active_mods
+        )
+        serialize_strings_as_list(
+            make_element("knownExpansions", parent=root), self.known_expansions
+        )
+        return result
+
+
 def is_mod_folder(path: Path) -> bool:
     """Check if a folder is a mod folder"""
     return path.joinpath("About", "About.xml").exists()
