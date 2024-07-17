@@ -6,7 +6,7 @@ from lxml import etree
 from rimworld.mod import Mod
 from rimworld.patch import PatchContext, get_operation
 from rimworld.util import unused
-from rimworld.xml import find_xmls, load_xml
+from rimworld.xml import assert_xml_eq, find_xmls, load_xml
 
 
 def make_parameters():  # pylint: disable=too-many-locals
@@ -79,48 +79,3 @@ def test_patches_dd(
 
     expected.tag = "Defs"
     assert_xml_eq(xml.getroot(), expected)
-
-
-def assert_xml_eq(e1: etree._Element, e2: etree._Element, path=""):
-    """test two elements for equality"""
-    if not isinstance(e1, etree._Element):
-        raise AssertionError(f"e1 ({e1}) is {type(e1)}, not _Element")
-    if not isinstance(e2, etree._Element):
-        raise AssertionError(f"e2 ({e2}) is {type(e2)}, not _Element")
-
-    # Compare tags
-
-    if e1.tag != e2.tag:
-        raise AssertionError(f"Tags do not match at {path}: {e1.tag} != {e2.tag}")
-
-    # Compare text
-    if (e1.text or "").strip() != (e2.text or "").strip():
-        raise AssertionError(
-            f"Text does not match at {path}: '{e1.text}' != '{e2.text}'"
-        )
-
-    # Compare tails
-    if (e1.tail or "").strip() != (e2.tail or "").strip():
-
-        raise AssertionError(
-            f"Tails do not match at {path}: '{e1.tail}' != '{e2.tail}'"
-        )
-
-    # Compare attributes
-    if e1.attrib != e2.attrib:
-        raise AssertionError(
-            f"Attributes do not match at {path}: {e1.attrib} != {e2.attrib}"
-        )
-
-    # Compare children
-    if len(e1) != len(e2):
-        print("NOMATCH")
-        print(str(etree.tostring(e1, pretty_print=True)))
-        print(str(etree.tostring(e2, pretty_print=True)))
-        raise AssertionError(
-            f"Number of children do not match at {path}: {len(e1)} != {len(e2)}"
-        )
-
-    # Recursively compare children
-    for i, (c1, c2) in enumerate(zip(e1, e2)):
-        assert_xml_eq(c1, c2, path=f"{path}/{e1.tag}[{i}]")

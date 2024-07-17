@@ -168,14 +168,14 @@ class ModAbout:
 
     package_id: str
     authors: list[str]
-    supported_versions: tuple[GameVersion]
-
+    supported_versions: tuple[GameVersion] | None = None
     name: str | None = None
     mod_version: str | None = None
     mod_icon_path: str | None = None
     url: str | None = None
     description: str | None = None
     descriptions_by_version: dict[GameVersion, str] | None = None
+    steam_app_id: str | None = None
     mod_dependencies: list[ModDependency] = field(default_factory=list)
     mod_dependencies_by_version: dict[GameVersion, list[ModDependency]] = field(
         default_factory=dict
@@ -244,6 +244,9 @@ class ModAbout:
             root.append(make_element("url", self.url))
 
         self._serialize_descriptions_by_version(root)
+
+        if self.steam_app_id:
+            root.append(make_element("steamAppId", self.steam_app_id))
 
         if self.mod_dependencies:
             serialize_as_list(
@@ -367,6 +370,7 @@ class ModAbout:
             mod_icon_path=element_text_or_none(xml.find("modIconPath")),
             url=element_text_or_none(xml.find("url")),
             descriptions_by_version=cls._deserialize_descriptions_by_version(xml),
+            steam_app_id=element_text_or_none(xml.find("steamAppId")),
             mod_dependencies=mod_dependencies,
             mod_dependencies_by_version=mod_dependencies_by_version,
             load_before=load_before,
@@ -393,6 +397,8 @@ class ModAbout:
             )
 
     def _serialize_supported_versions(self, root: etree._Element):
+        if self.supported_versions is None:
+            return
         root.append(
             make_element(
                 "supportedVersions",
@@ -450,12 +456,15 @@ class ModAbout:
         return authors
 
     @staticmethod
-    def _deserialize_supported_versions(xml: etree._ElementTree) -> tuple[GameVersion]:
-        # supported_versions
+    def _deserialize_supported_versions(
+        xml: etree._ElementTree,
+    ) -> tuple[GameVersion] | None:
         supported_versions_raw = xml.xpath("/ModMetaData/supportedVersions/li/text()")
+        if not supported_versions_raw:
+            return None
         assert isinstance(supported_versions_raw, list)
         supported_versions = tuple(
-            map(GameVersion, cast(list[str], supported_versions_raw))
+            map(GameVersion.new, cast(list[str], supported_versions_raw))
         )
         return supported_versions
 

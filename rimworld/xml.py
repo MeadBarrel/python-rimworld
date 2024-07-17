@@ -29,6 +29,8 @@ __all__ = [
     "deserialize_from_list",
     "deserialize_strings_from_list",
     "xml_to_string",
+    "assert_xml_eq",
+    "assert_xml_eq_ignore_order",
 ]
 
 
@@ -340,3 +342,98 @@ def deserialize_strings_from_list(parent: etree._Element) -> list[str]:
 def xml_to_string(node: etree._ElementTree | etree._Element):
     """Convert xml to pretty-printed utf string"""
     return etree.tostring(node, pretty_print=True, encoding="utf-8").decode("utf-8")
+
+
+def assert_xml_eq(e1: etree._Element, e2: etree._Element, path=""):
+    """test two elements for equality"""
+    if not isinstance(e1, etree._Element):
+        raise AssertionError(f"e1 ({e1}) is {type(e1)}, not _Element")
+    if not isinstance(e2, etree._Element):
+        raise AssertionError(f"e2 ({e2}) is {type(e2)}, not _Element")
+
+    # Compare tags
+
+    if e1.tag != e2.tag:
+        raise AssertionError(f"Tags do not match at {path}: {e1.tag} != {e2.tag}")
+
+    # Compare text
+    if (e1.text or "").strip() != (e2.text or "").strip():
+        raise AssertionError(
+            f"Text does not match at {path}: '{e1.text}' != '{e2.text}'"
+        )
+
+    # Compare tails
+    if (e1.tail or "").strip() != (e2.tail or "").strip():
+
+        raise AssertionError(
+            f"Tails do not match at {path}: '{e1.tail}' != '{e2.tail}'"
+        )
+
+    # Compare attributes
+    if e1.attrib != e2.attrib:
+        raise AssertionError(
+            f"Attributes do not match at {path}: {e1.attrib} != {e2.attrib}"
+        )
+
+    # Compare children
+    if len(e1) != len(e2):
+        print("NOMATCH")
+        print(str(etree.tostring(e1, pretty_print=True)))
+        print(str(etree.tostring(e2, pretty_print=True)))
+        raise AssertionError(
+            f"Number of children do not match at {path}: {len(e1)} != {len(e2)}"
+        )
+
+    # Recursively compare children
+    for i, (c1, c2) in enumerate(zip(e1, e2)):
+        assert_xml_eq(c1, c2, path=f"{path}/{e1.tag}[{i}]")
+
+
+from lxml import etree
+
+
+def assert_xml_eq_ignore_order(e1: etree._Element, e2: etree._Element, path=""):
+    """Test two elements for equality, ignoring the order of elements."""
+    if not isinstance(e1, etree._Element):
+        raise AssertionError(f"e1 ({e1}) is {type(e1)}, not _Element")
+    if not isinstance(e2, etree._Element):
+        raise AssertionError(f"e2 ({e2}) is {type(e2)}, not _Element")
+
+    # Compare tags
+    if e1.tag != e2.tag:
+        raise AssertionError(f"Tags do not match at {path}: {e1.tag} != {e2.tag}")
+
+    # Compare text
+    if (e1.text or "").strip() != (e2.text or "").strip():
+        raise AssertionError(
+            f"Text does not match at {path}: '{e1.text}' != '{e2.text}'"
+        )
+
+    # Compare tails
+    if (e1.tail or "").strip() != (e2.tail or "").strip():
+        raise AssertionError(
+            f"Tails do not match at {path}: '{e1.tail}' != '{e2.tail}'"
+        )
+
+    # Compare attributes
+    if e1.attrib != e2.attrib:
+        raise AssertionError(
+            f"Attributes do not match at {path}: {e1.attrib} != {e2.attrib}"
+        )
+
+    # Compare children
+    if len(e1) != len(e2):
+        raise AssertionError(
+            f"Number of children do not match at {path}: {len(e1)} != {len(e2)}"
+        )
+
+    # Sort children by tag and text for comparison
+    def sort_key(elem):
+        return (elem.tag, (elem.text or "").strip())
+
+    sorted_e1_children = sorted(e1, key=sort_key)
+    sorted_e2_children = sorted(e2, key=sort_key)
+
+    # Recursively compare children
+    for i, (c1, c2) in enumerate(zip(sorted_e1_children, sorted_e2_children)):
+        assert_xml_eq(c1, c2, path=f"{path}/{e1.tag}[{i}]")
