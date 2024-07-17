@@ -5,7 +5,7 @@ Module for modeling RimWorld's mod metadata formats.
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Collection, Iterator, Self, Sequence, cast
+from typing import Collection, Iterable, Iterator, Self, Sequence, cast
 
 from lxml import etree
 
@@ -23,6 +23,8 @@ __all__ = [
     "LoadFolders",
     "NotAModFolderError",
     "is_mod_folder",
+    "load_mods",
+    "select_mods",
 ]
 
 
@@ -463,9 +465,9 @@ class ModAbout:
         if not supported_versions_raw:
             return None
         assert isinstance(supported_versions_raw, list)
-        supported_versions = tuple(
-            map(GameVersion.new, cast(list[str], supported_versions_raw))
-        )
+        supported_versions_raw = cast(list[str], supported_versions_raw)
+        supported_versions_raw = [x.strip() for x in supported_versions_raw]
+        supported_versions = tuple(map(GameVersion.new, supported_versions_raw))
         return supported_versions
 
     @staticmethod
@@ -641,22 +643,20 @@ class Mod:
 
         return cls(path, about=about, loadfolders=loadfolders)
 
-    def mod_folders(
-        self, game_version: GameVersion, active_package_ids: Collection[str]
-    ) -> Iterator[AbsoluteModFolder]:
+    def mod_folders(self, mods_config: "ModsConfig") -> Iterator[AbsoluteModFolder]:
         """Return a list of mod folders based on the game version and loaded mods"""
 
         if self.loadfolders is not None:
             yield from (
-                f.with_root(f)
+                f.with_root(self.path)
                 for f in self.loadfolders.compatible_folders(
-                    game_version, active_package_ids
+                    mods_config.version, mods_config.active_mods
                 )
             )
         else:
             yield RelativeModFolder().with_root(self.path)
             yield RelativeModFolder("Common").with_root(self.path)
-            matching_version = game_version.get_matching_version(
+            matching_version = mods_config.version.get_matching_version(
                 self.about.supported_versions or []
             )
             if matching_version is not None:
@@ -668,6 +668,16 @@ class Mod:
         yield RelativeModFolder("Common")
         for version in self.about.supported_versions or []:
             yield RelativeModFolder(str(version))
+
+    def def_files(self, mods_config: "ModsConfig") -> Iterator[Path]:
+        """Iterate through absolute paths to all .xml files in Defs"""
+        for mod_folder in self.mod_folders(mods_config):
+            yield from mod_folder.def_files()
+
+    def patch_files(self, mods_config: "ModsConfig") -> Iterator[Path]:
+        """Iterate through absolute paths to all .xml files in Patches"""
+        for mod_folder in self.mod_folders(mods_config):
+            yield from mod_folder.patch_files()
 
 
 @dataclass(frozen=True)
@@ -718,4 +728,33 @@ class ModsConfig:
 
 def is_mod_folder(path: Path) -> bool:
     """Check if a folder is a mod folder"""
+    if not path.is_dir():
+        return False
     return path.joinpath("About", "About.xml").exists()
+
+
+def load_mods(*folders: Path) -> Iterator[Mod]:
+    """Recursively load mods from folders"""
+    for folder in folders:
+        if not folder.is_dir():
+            continue
+        if is_mod_folder(folder):
+            yield Mod.load(folder)
+            continue
+        for sf in folder.iterdir():
+            yield from load_mods(sf)
+
+
+def select_mods(
+    mods: Iterable[Mod],
+    package_id_in: Collection[str] | None = None,
+    name_in: Collection[str] | None = None,
+) -> Iterator[Mod]:
+    """Filter out mods"""
+
+    for mod in mods:
+        if package_id_in is not None and mod.package_id not in package_id_in:
+            continue
+        if name_in is not None and mod.about.name not in name_in:
+            continue
+        yield mod

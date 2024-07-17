@@ -37,7 +37,7 @@ class GameVersion:
         """Create a GameVersion instance from string"""
         match = VERSION_RE.match(source)
         if not match:
-            raise ValueError("Source is not a version string")
+            raise ValueError(f"{source[:100]} is not a version string")
         version_part = match.group("version")
         adds_part = match.group("adds")
         version_tuple = tuple(map(int, version_part.split(".")))

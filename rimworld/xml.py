@@ -251,14 +251,19 @@ def make_element(
     return result
 
 
-def element_text_or_none(element: etree._Element | None) -> str | None:
+def element_text_or_none(element: etree._Element | None, strip=True) -> str | None:
     """Convenience function to return element's text"""
     if element is None:
         return None
-    return element.text
+    text = element.text
+    if text is None:
+        return None
+    if strip:
+        text = text.strip()
+    return text
 
 
-def ensure_element_text(element: etree._Element | None) -> str:
+def ensure_element_text(element: etree._Element | None, strip=True) -> str:
     """Convenience function to return element's text
 
     raises an exception if either element is None or has no text
@@ -267,6 +272,8 @@ def ensure_element_text(element: etree._Element | None) -> str:
         raise RuntimeError("element must be present")
     if element.text is None:
         raise RuntimeError("element must have text")
+    if strip:
+        return element.text.strip()
     return element.text
 
 
@@ -329,12 +336,14 @@ def deserialize_from_list[
     return [cls_.from_xml(li) for li in parent.findall("li")]
 
 
-def deserialize_strings_from_list(parent: etree._Element) -> list[str]:
+def deserialize_strings_from_list(parent: etree._Element, strip=True) -> list[str]:
     """Deserialize strings from a list"""
     result = []
     for li in parent.findall("li"):
         text = element_text_or_none(li)
         if text:
+            if strip:
+                text = text.strip()
             result.append(text)
     return result
 
