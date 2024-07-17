@@ -1,4 +1,37 @@
-""" Provides basic patcher """
+"""
+Provides xml patching functionality
+
+First, you need a patch context. A patch context contains some information
+about rimworld's configuration that may be needed by the patching process,
+like what mods are enabled.
+
+>>> context = PatchContext(
+...     active_package_ids=["ludeon.rimworld", "unlimitedhugs.allowtool"],
+...     active_package_names=["Allow Tool"]
+...     )
+
+Now, define an empty Defs xml and an xml for our patch operation
+
+>>> defs = etree.ElementTree(etree.Element('Defs'))
+>>> operation_node = etree.fromstring('''
+... <Operation Class="PatchOperationAdd">
+...     <xpath>/Defs</xpath>
+...     <value><thingDef><defName>dummy_def</defName></thingDef></value>
+... </Operation>
+... ''')
+
+Now, you need a function to deserialize that patch operation. It should 
+conform to `Patch` protocol. This module defines one such function, which
+should be enough for most of your needs:
+
+>>> operation = get_operation(operation_node)
+
+We can now apply that operation to the Defs xml defined previously
+
+>>> operation(defs, context)
+PatchOperationBasicCounterResult(operation=..., nodes_affected=1)
+
+"""
 
 from copy import deepcopy
 from dataclasses import dataclass

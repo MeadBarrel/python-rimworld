@@ -25,7 +25,7 @@ reportIncompatibleMethodOverride = true
 testpaths=['tests', 'rimworld']
 pythonpath=['.']
 addopts = "--doctest-modules"
-doctest_optionflags = ['NORMALIZE_WHITESPACE', 'IGNORE_EXCEPTION_DETAIL']
+doctest_optionflags = ['NORMALIZE_WHITESPACE', 'IGNORE_EXCEPTION_DETAIL', 'ELLIPSIS']
 
 [build-system]
 requires = ["poetry-core"]

@@ -9,8 +9,6 @@ from typing import Collection, Iterator, Self, Sequence, cast
 
 from lxml import etree
 
-from rimworld.patch.proto import PatchContext
-
 from .gameversion import GameVersion
 from .xml import (XMLSerializable, deserialize_from_list,
                   deserialize_strings_from_list, element_text_or_none,
