@@ -15,7 +15,7 @@ __all__ = ["GameVersion"]
 class GameVersion:
     """Represents a game version"""
 
-    subversions: tuple[int, ...]
+    _subversions: tuple[int, ...]
 
     def __init__(self, version: "str | GameVersion | tuple[int, ...]"):
         match version:
@@ -55,17 +55,17 @@ class GameVersion:
         return hash(self._subversions)
 
     def __str__(self) -> str:
-        return ".".join(map(str, self.subversions))
+        return ".".join(map(str, self._subversions))
 
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, GameVersion):
             return False
-        return self.subversions == __value.subversions
+        return self._subversions == __value._subversions
 
     def __lt__(self, __value: object) -> bool:
         if not isinstance(__value, GameVersion):
             raise NotImplementedError()
-        for this, other in zip(self.subversions, __value.subversions):
+        for this, other in zip(self._subversions, __value._subversions):
             if this < other:
                 return True
-        return len(self.subversions) < len(__value.subversions)
+        return len(self._subversions) < len(__value._subversions)

@@ -338,4 +338,9 @@ def deserialize_from_list[
 
 def deserialize_strings_from_list(parent: etree._Element) -> list[str]:
     """Deserialize strings from a list"""
-    return [ensure_element_text(li) for li in parent.findall("li")]
+    result = []
+    for li in parent.findall("li"):
+        text = element_text_or_none(li)
+        if text:
+            result.append(text)
+    return result

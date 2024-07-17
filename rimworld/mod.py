@@ -21,6 +21,7 @@ __all__ = [
     "ModAbout",
     "LoadFolders",
     "NotAModFolderError",
+    "is_mod_folder",
 ]
 
 
@@ -166,13 +167,13 @@ class ModAbout:
 
     package_id: str
     authors: list[str]
-    name: str
-    description: str
     supported_versions: tuple[GameVersion]
 
+    name: str | None = None
     mod_version: str | None = None
     mod_icon_path: str | None = None
     url: str | None = None
+    description: str | None = None
     descriptions_by_version: dict[GameVersion, str] | None = None
     mod_dependencies: list[ModDependency] = field(default_factory=list)
     mod_dependencies_by_version: dict[GameVersion, list[ModDependency]] = field(
@@ -227,7 +228,10 @@ class ModAbout:
         result = etree.ElementTree(root)
 
         root.append(make_element("packageId", self.package_id))
-        root.append(make_element("name", self.name))
+        if self.description:
+            root.append(make_element("description", self.description))
+        if self.name:
+            root.append(make_element("name", self.name))
         self._serialize_authors(root)
         self._serialize_supported_versions(root)
 
@@ -355,8 +359,8 @@ class ModAbout:
         return cls(
             package_id=ensure_element_text(xml.find("packageId")),
             authors=cls._deserialize_authors(xml),
-            name=ensure_element_text(xml.find("name")),
-            description=ensure_element_text(xml.find("description")),
+            name=element_text_or_none(xml.find("name")),
+            description=element_text_or_none(xml.find("description")),
             supported_versions=cls._deserialize_supported_versions(xml),
             mod_version=element_text_or_none(xml.find("modVersion")),
             mod_icon_path=element_text_or_none(xml.find("modIconPath")),
@@ -523,7 +527,7 @@ class LoadFolders:
 
     def all_folders(self):
         """Return paths to all listed mod folders"""
-        for folders in self.load_folders.values():
+        for folders in self._load_folders.values():
             for folder in folders:
                 yield RelativeModFolder(folder.path)
 
@@ -534,10 +538,10 @@ class LoadFolders:
 
         Return None if there are no records compatible with `game_version`
         """
-        matching_version = game_version.get_matching_version(self.load_folders.keys())
+        matching_version = game_version.get_matching_version(self._load_folders.keys())
         if matching_version is None:
             return
-        for folder in self.load_folders[matching_version]:
+        for folder in self._load_folders[matching_version]:
             if folder.should_include(active_package_ids):
                 yield RelativeModFolder(folder.path)
 
@@ -557,7 +561,7 @@ class LoadFolders:
         """Deserialize from xml"""
         result = {}
         root = xml.getroot()
-        if not root.tag == "loadFolders":
+        if root.tag.lower() != "loadfolders":
             raise RuntimeError(
                 f"Cannot parse loadFolders: incoorect root tag ({root.tag})"
             )
@@ -568,7 +572,7 @@ class LoadFolders:
             this_version_folders = []
             for li in version_node.findall("li"):
                 if_mod_active = li.get("IfModActive")
-                path = ensure_element_text(li)
+                path = element_text_or_none(li) or ""
                 if path.startswith("/"):
                     path = f".{path}"
                 this_version_folders.append(LoadFolder(Path(path), if_mod_active))
@@ -580,7 +584,7 @@ class LoadFolders:
         """Serialize into an xml"""
         root = etree.Element("loadFolders")
         result = etree.ElementTree(root)
-        for version, folders in self.load_folders.items():
+        for version, folders in self._load_folders.items():
             version_element = etree.Element(f"v{version}")
             root.append(version_element)
             for folder in reversed(folders):
@@ -654,3 +658,7 @@ class Mod:
         yield RelativeModFolder("Common")
         for version in self.about.supported_versions:
             yield RelativeModFolder(str(version))
+
+
+def is_mod_folder(path: Path) -> bool:
+    return path.joinpath("About", "About.xml").exists()

@@ -1,5 +1,6 @@
 """ Provides basic patcher """
 
+import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -171,6 +172,7 @@ class WorldPatcher(Patcher):
         operation: PatchOperation,
         context: PatchContext,
     ) -> PatchOperationResult:
+        logging.getLogger(__name__).debug("Applying patch operation %s", operation)
         return operation.apply(self, context)
 
     def collect_operations(
