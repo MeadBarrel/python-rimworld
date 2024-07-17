@@ -1,8 +1,7 @@
 """ Base definitions for patching """
 
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Protocol, TypeAlias, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from lxml import etree
 

@@ -1,6 +1,5 @@
 """ Provides basic patcher """
 
-import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -9,7 +8,6 @@ from typing import Self
 from lxml import etree
 
 from rimworld.error import MalformedPatchError
-from rimworld.util import unused
 
 from .operations.add import PatchOperationAdd
 from .operations.addmodextension import PatchOperationAddModExtension
@@ -24,7 +22,7 @@ from .operations.remove import PatchOperationRemove
 from .operations.replace import PatchOperationReplace
 from .operations.sequence import PatchOperationSequence
 from .operations.setname import PatchOperationSetName
-from .proto import PatchContext, Patcher, PatchOperation, PatchOperationResult
+from .proto import PatchContext, PatchOperation, PatchOperationResult
 from .result import (PatchOperationDenied, PatchOperationForceFailed,
                      PatchOperationInverted, PatchOperationSkipped,
                      PatchOperationSuppressed)
