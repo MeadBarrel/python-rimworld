@@ -8,6 +8,10 @@ It provides functionality to load game data into an xml file and apply patches t
 
 ## Basic usage
 
+The package provides a convenience function `load_world` for when you just need to
+load the rimworld's xml data, apply patches, and then explore the resulting xml as you
+like.
+
 ```python
 from pathlib import Path
 
@@ -32,6 +36,9 @@ print(world.xpath("/Defs/ThingDef/label/text()"))
 
 ## Slightly more advanced usage
 
+If you need something more advanced, you can go lower level.
+
+Here is basically what `load_world` from the above example does:
 
 ```python
 from pathlib import Path
