@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Defs>
+  
+  <AnimationDef>
+    <defName>DevourerDigesting</defName>
+
+    <durationTicks>120</durationTicks>
+    <startOnRandomTick>true</startOnRandomTick>
+    <animationParts>
+      <li>
+        <key>Root</key>
+        <value>
+          <workerClass>AnimationWorker_Keyframes</workerClass>
+          <keyframes>
+            <li>
+              <tick>0</tick>
+              <angle>-5</angle>
+            </li>
+
+            <li>
+              <tick>20</tick>
+              <angle>5</angle>
+            </li>
+            <li>
+              <tick>40</tick>
+              <angle>-5</angle>
+            </li>
+            <li>
+              <tick>80</tick>
+              <angle>7</angle>
+            </li>
+            <li>
+              <tick>120</tick>
+              <angle>-5</angle>
+            </li>
+          </keyframes>
+        </value>
+      </li>
+    </animationParts>
+  </AnimationDef>
+  
+</Defs>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <AbilityDef Name="SpikeLaunchBase" Abstract="True">
+    <label>spike launch</label>
+    <description>Launch a bone spike at a target.</description>
+    <cooldownTicksRange>120</cooldownTicksRange>
+    <aiCanUse>true</aiCanUse>
+    <verbProperties>
+      <verbClass>Verb_AbilityShoot</verbClass>
+      <warmupTime>0.5</warmupTime>
+      <soundCast>Ability_SpineLaunch</soundCast>
+      <ai_IsWeapon>false</ai_IsWeapon>
+    </verbProperties>
+  </AbilityDef>
+
+  <ThingDef ParentName="BaseBullet" Name="SpikeBase" Abstract="True">
+    <label>spike</label>
+    <graphicData>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <projectile>
+      <damageDef>RangedStab</damageDef>
+      <armorPenetrationBase>1</armorPenetrationBase>
+      <stoppingPower>1</stoppingPower>
+      <speed>55</speed>
+    </projectile>
+  </ThingDef>
+  
+</Defs>
+
