@@ -657,7 +657,7 @@ class Mod:
             yield RelativeModFolder().with_root(self.path)
             yield RelativeModFolder("Common").with_root(self.path)
             matching_version = game_version.get_matching_version(
-                self.about.supported_versions
+                self.about.supported_versions or []
             )
             if matching_version is not None:
                 yield RelativeModFolder(str(matching_version)).with_root(self.path)
@@ -666,7 +666,7 @@ class Mod:
         """Return default mod folders for this mod"""
         yield RelativeModFolder()
         yield RelativeModFolder("Common")
-        for version in self.about.supported_versions:
+        for version in self.about.supported_versions or []:
             yield RelativeModFolder(str(version))
 
 
