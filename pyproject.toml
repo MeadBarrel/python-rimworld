@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rimworld"
-version = "0.3.0"
+version = "0.3.1"
 description = ""
 authors = ["Natalia Borovskikh <lai.tash@gmail.com>"]
 readme = "README.md"

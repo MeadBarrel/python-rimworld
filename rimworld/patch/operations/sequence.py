@@ -73,4 +73,5 @@ class PatchOperationSequence(PatchOperation):
         for operation in self.operations:
             n = etree.Element("li")
             operation.to_xml(n)
+            operations.append(n)
         node.append(operations)
